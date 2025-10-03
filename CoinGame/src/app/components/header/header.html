@@ -1,0 +1,87 @@
+<header class="bg-[#2a2a40] px-8 py-4 flex items-center justify-between shadow-lg">
+  <h1 class="text-2xl font-bold italic text-[#5cead6]">CoinGame</h1>
+
+  <div class="flex gap-3">
+    <button 
+      (click)="openLogin()" 
+      class="px-6 py-2.5 border-2 border-[#5cead6] text-[#5cead6] rounded-lg font-medium hover:bg-[#5cead6] hover:text-[#1e1e2f] transition-all duration-300"
+    >
+      เข้าสู่ระบบ
+    </button>
+  </div>
+</header>
+
+<!-- Login Modal -->
+<div 
+  *ngIf="showLogin" 
+  class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+  (click)="closeLogin()"
+>
+  <div 
+    class="bg-gradient-to-br from-[#2a2a40] to-[#1e1e2f] rounded-2xl w-11/12 max-w-md p-10 shadow-2xl border border-[#5cead6] border-opacity-20 relative"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- ปุ่มปิด -->
+    <button 
+      (click)="closeLogin()"
+      class="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-4xl leading-none transition-colors duration-300"
+    >
+      ×
+    </button>
+
+    <h2 class="text-3xl font-bold text-[#5cead6] mb-8 text-center">เข้าสู่ระบบ</h2>
+    
+    <form (ngSubmit)="onSubmit()" class="space-y-6">
+      <!-- Email Input -->
+      <div>
+        <label class="block text-gray-300 text-sm font-medium mb-2">
+          อีเมล หรือชื่อผู้ใช้
+        </label>
+        <input 
+          type="text"
+          [(ngModel)]="email"
+          name="email"
+          placeholder="กรอกอีเมลหรือชื่อผู้ใช้"
+          required
+          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300"
+        >
+      </div>
+
+      <!-- Password Input -->
+      <div>
+        <label class="block text-gray-300 text-sm font-medium mb-2">
+          รหัสผ่าน
+        </label>
+        <div class="relative">
+          <input 
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="กรอกรหัสผ่าน"
+            required
+            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300"
+          >
+          <button 
+            type="button"
+            (click)="togglePasswordVisibility()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-xl opacity-60 hover:opacity-100 transition-opacity duration-300"
+          >
+            <span *ngIf="!showPassword">👁️</span>
+            <span *ngIf="showPassword">👁️‍🗨️</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-3 mt-8">
+        <button 
+          type="submit"
+          class="flex-1 bg-[#64FE8B] text-[#1e1e2f] px-6 py-4 rounded-lg font-semibold hover:bg-[#4dd4c0] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#5cead6]/30 active:translate-y-0 transition-all duration-300"
+        >
+          เข้าสู่ระบบ
+        </button>
+       
+      </div>
+    </form>
+  </div>
+</div>
