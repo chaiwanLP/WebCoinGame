@@ -1,28 +1,30 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
+import { HttpClientModule } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 @Component({
   selector: 'app-header',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, HttpClientModule],
   templateUrl: './header.html',
-  styleUrl: './header.css'
+  styleUrl: './header.css',
 })
 export class Header {
+  constructor(private http: HttpClient) {}
   showLogin = false;
   showRegister = false;
   showPassword = false;
   showConfirmPassword = false;
   showProfileMenu = false;
-  
+
   // User state
   isLoggedIn = false;
   currentUser: any = null;
-  
+
   // Login form
   loginEmail = '';
   loginPassword = '';
-  
+
   // Register form
   registerUsername = '';
   registerEmail = '';
@@ -49,16 +51,16 @@ export class Header {
   onLoginSubmit() {
     console.log('Login - Email:', this.loginEmail);
     console.log('Login - Password:', this.loginPassword);
-    
+
     // TODO: เพิ่ม login logic และ call API
     // สมมติว่า login สำเร็จ
     this.isLoggedIn = true;
     this.currentUser = {
       username: this.loginEmail.split('@')[0],
       email: this.loginEmail,
-      profileImage: 'assets/images/chick.png' // รูป default
+      profileImage: 'assets/images/chick.png', // รูป default
     };
-    
+
     this.closeLogin();
   }
 
@@ -87,7 +89,7 @@ export class Header {
     const file = event.target.files[0];
     if (file) {
       this.registerProfileImage = file;
-      
+
       // สร้าง preview รูปภาพ
       const reader = new FileReader();
       reader.onload = (e: any) => {
@@ -96,29 +98,33 @@ export class Header {
       reader.readAsDataURL(file);
     }
   }
-
   onRegisterSubmit() {
-    // Validate password match
     if (this.registerPassword !== this.registerConfirmPassword) {
       alert('รหัสผ่านไม่ตรงกัน!');
       return;
     }
 
-    console.log('Register - Username:', this.registerUsername);
-    console.log('Register - Email:', this.registerEmail);
-    console.log('Register - Password:', this.registerPassword);
-    console.log('Register - Profile Image:', this.registerProfileImage);
-    
-    // TODO: เพิ่ม register logic (upload image, call API, etc.)
-    // สมมติว่า register สำเร็จ
-    this.isLoggedIn = true;
-    this.currentUser = {
-      username: this.registerUsername,
-      email: this.registerEmail,
-      profileImage: this.registerProfileImagePreview || 'assets/images/chick.png'
-    };
-    
-    this.closeRegister();
+    // ✅ เตรียม FormData
+    const formData = new FormData();
+    formData.append('username', this.registerUsername);
+    formData.append('email', this.registerEmail);
+    formData.append('password', this.registerPassword);
+
+    if (this.registerProfileImage) {
+      formData.append('profileImage', this.registerProfileImage);
+    }
+
+    // ✅ ส่งไป API
+    this.http.post('https://api-coin-game.vercel.app/register', formData).subscribe({
+      next: (res) => {
+        console.log('Register success:', res);
+        alert('สมัครสมาชิกสำเร็จ');
+      },
+      error: (err) => {
+        console.error('Register error:', err);
+        alert('สมัครสมาชิกไม่สำเร็จ');
+      },
+    });
   }
 
   resetRegisterForm() {
