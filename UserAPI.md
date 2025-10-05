@@ -32,7 +32,7 @@
 }
 ```
 
-## 🔐 Authentication register
+## 🔐 Authentication login
 
 - Token: `/login`
 - URL: `/login`
