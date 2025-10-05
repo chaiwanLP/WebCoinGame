@@ -111,7 +111,7 @@ export class Header {
     formData.append('password', this.registerPassword);
 
     if (this.registerProfileImage) {
-      formData.append('profileImage', this.registerProfileImage);
+      formData.append('profile_img', this.registerProfileImage);
     }
 
     // ✅ ส่งไป API
