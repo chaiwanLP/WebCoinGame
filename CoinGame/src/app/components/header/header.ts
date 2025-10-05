@@ -1,28 +1,34 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ApiGame } from '../../services/api-game';
+import { User } from '../../models/users.model';
+import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-header',
   imports: [FormsModule, CommonModule],
   templateUrl: './header.html',
-  styleUrl: './header.css'
+  styleUrl: './header.css',
 })
-export class Header {
+export class Header implements OnInit, OnDestroy {
   showLogin = false;
   showRegister = false;
   showPassword = false;
   showConfirmPassword = false;
   showProfileMenu = false;
-  
+
   // User state
   isLoggedIn = false;
-  currentUser: any = null;
-  
+  currentUser: User | null = null;
+
   // Login form
   loginEmail = '';
   loginPassword = '';
-  
+  isLoginLoading = false;
+  loginError = '';
+
   // Register form
   registerUsername = '';
   registerEmail = '';
@@ -31,10 +37,42 @@ export class Header {
   registerProfileImage: File | null = null;
   registerProfileImagePreview: string | null = null;
 
+  // Subscriptions
+  private subscriptions = new Subscription();
+
+  constructor(
+    private apiService: ApiGame,
+    private cdr: ChangeDetectorRef,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    // Subscribe to login state
+    this.subscriptions.add(
+      this.apiService.isLoggedIn$.subscribe((isLoggedIn) => {
+        this.isLoggedIn = isLoggedIn;
+      })
+    );
+
+    // Subscribe to current user
+    this.subscriptions.add(
+      this.apiService.currentUser$.subscribe((user) => {
+        this.currentUser = user;
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  // ========================================
   // Login methods
+  // ========================================
   openLogin() {
     this.showLogin = true;
     this.showRegister = false;
+    this.resetLoginForm();
   }
 
   closeLogin() {
@@ -47,28 +85,77 @@ export class Header {
   }
 
   onLoginSubmit() {
-    console.log('Login - Email:', this.loginEmail);
-    console.log('Login - Password:', this.loginPassword);
-    
-    // TODO: เพิ่ม login logic และ call API
-    // สมมติว่า login สำเร็จ
-    this.isLoggedIn = true;
-    this.currentUser = {
-      username: this.loginEmail.split('@')[0],
-      email: this.loginEmail,
-      profileImage: 'assets/images/chick.png' // รูป default
-    };
-    
-    this.closeLogin();
+    // Prevent double submission
+    if (this.isLoginLoading) return;
+
+    // Reset error
+    this.loginError = '';
+
+    // Validate
+    if (!this.loginEmail || !this.loginPassword) {
+      this.loginError = 'กรุณากรอกอีเมลและรหัสผ่าน';
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.loginEmail)) {
+      this.loginError = 'รูปแบบอีเมลไม่ถูกต้อง';
+      return;
+    }
+
+    // Start loading
+    this.isLoginLoading = true;
+    this.cdr.detectChanges();
+
+    this.apiService.login(this.loginEmail, this.loginPassword).subscribe({
+      next: (response) => {
+        console.log('Login successful:', response);
+        this.isLoginLoading = false;
+        this.cdr.detectChanges();
+        this.closeLogin();
+
+        // Redirect ตาม role
+        if (response.user.role === 'admin') {
+          this.router.navigate(['/admin']); // Admin ไป Dashboard
+        } else {
+          this.router.navigate(['/']); // User อยู่หน้าเดิม (game-shop)
+        }
+
+        alert(`ยินดีต้อนรับ ${response.user.username}!`);
+      },
+      error: (error) => {
+        console.error('Login failed:', error);
+        this.isLoginLoading = false;
+        this.cdr.detectChanges();
+
+        // แสดง error message จาก Backend
+        if (error.error?.message) {
+          this.loginError = error.error.message;
+        } else if (error.status === 401) {
+          this.loginError = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+        } else if (error.status === 404) {
+          this.loginError = 'ไม่พบผู้ใช้ในระบบ กรุณาสมัครสมาชิกก่อน';
+        } else if (error.status === 0) {
+          this.loginError = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้';
+        } else {
+          this.loginError = 'เกิดข้อผิดพลาด กรุณาลองใหม่';
+        }
+      },
+    });
   }
 
   resetLoginForm() {
     this.loginEmail = '';
     this.loginPassword = '';
     this.showPassword = false;
+    this.isLoginLoading = false;
+    this.loginError = '';
   }
 
-  // Register methods
+  // ========================================
+  // Register methods (ยังไม่เชื่อม API)
+  // ========================================
   openRegister() {
     this.showRegister = true;
     this.showLogin = false;
@@ -87,8 +174,7 @@ export class Header {
     const file = event.target.files[0];
     if (file) {
       this.registerProfileImage = file;
-      
-      // สร้าง preview รูปภาพ
+
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.registerProfileImagePreview = e.target.result;
@@ -108,17 +194,9 @@ export class Header {
     console.log('Register - Email:', this.registerEmail);
     console.log('Register - Password:', this.registerPassword);
     console.log('Register - Profile Image:', this.registerProfileImage);
-    
-    // TODO: เพิ่ม register logic (upload image, call API, etc.)
-    // สมมติว่า register สำเร็จ
-    this.isLoggedIn = true;
-    this.currentUser = {
-      username: this.registerUsername,
-      email: this.registerEmail,
-      profileImage: this.registerProfileImagePreview || 'assets/images/chick.png'
-    };
-    
-    this.closeRegister();
+
+    // TODO: เชื่อม Register API ในขั้นตอนถัดไป
+    alert('Register API ยังไม่ได้เชื่อม');
   }
 
   resetRegisterForm() {
@@ -143,15 +221,18 @@ export class Header {
     this.openLogin();
   }
 
+  // ========================================
   // Profile methods
+  // ========================================
   toggleProfileMenu() {
     this.showProfileMenu = !this.showProfileMenu;
   }
 
   logout() {
-    this.isLoggedIn = false;
-    this.currentUser = null;
-    this.showProfileMenu = false;
-    console.log('User logged out');
+    if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+      this.apiService.logout(); // ✨ เรียก API logout
+      this.showProfileMenu = false;
+      alert('ออกจากระบบสำเร็จ');
+    }
   }
 }

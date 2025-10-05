@@ -31,7 +31,7 @@ export class ShopComponent {
     title: 'Grand Theft Auto V', 
     category: 'Action-adventure', 
     price: 955,
-    img: 'assets/images/chick.png'  // ✅ ถูกต้อง
+    img: 'assets/images/chick.png'  
   },
   { 
     title: 'Pubg', 
