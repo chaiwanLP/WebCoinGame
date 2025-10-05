@@ -147,6 +147,55 @@ export class Header implements OnInit, OnDestroy {
     });
   }
 
+  onRegisterSubmit() {
+    // Validate
+    if (!this.registerUsername || !this.registerEmail || !this.registerPassword) {
+      alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+      return;
+    }
+
+    if (this.registerPassword !== this.registerConfirmPassword) {
+      alert('รหัสผ่านไม่ตรงกัน!');
+      return;
+    }
+
+    if (this.registerPassword.length < 4) {
+      alert('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+      return;
+    }
+
+    // เรียก API Service
+    this.apiService
+      .register({
+        username: this.registerUsername,
+        email: this.registerEmail,
+        password: this.registerPassword,
+        profileImage: this.registerProfileImage || undefined,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Register success:', response);
+          this.closeRegister();
+
+          // Redirect ตาม role
+          if (response.user.role === 'admin') {
+            this.router.navigate(['/admin']);
+          } else {
+            this.router.navigate(['/']);
+          }
+
+          alert(`สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ ${response.user.username}`);
+        },
+        error: (error) => {
+          console.error('Register error:', error);
+
+          const errorMessage =
+            error.error?.message || error.message || 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่';
+          alert(errorMessage);
+        },
+      });
+  }
+
   resetLoginForm() {
     this.loginEmail = '';
     this.loginPassword = '';
@@ -184,38 +233,6 @@ export class Header implements OnInit, OnDestroy {
       reader.readAsDataURL(file);
     }
   }
-  onRegisterSubmit() {
-    if (this.registerPassword !== this.registerConfirmPassword) {
-      alert('รหัสผ่านไม่ตรงกัน!');
-      return;
-    }
-
-    // ✅ เตรียม FormData
-    const formData = new FormData();
-    formData.append('username', this.registerUsername);
-    formData.append('email', this.registerEmail);
-    formData.append('password', this.registerPassword);
-
-    if (this.registerProfileImage) {
-      formData.append('profile_img', this.registerProfileImage);
-    }
-
-    // ✅ ส่งไป API
-    this.http.post('https://api-coin-game.vercel.app/register', formData).subscribe({
-      next: (res: any) => {
-        console.log('Register success:', res);
-        alert(res.message || 'สมัครสมาชิกสำเร็จ'); // ใช้ข้อความจาก backend
-      },
-      error: (err) => {
-        console.error('Register error:', err);
-        const msg =
-          err.error?.message || // ข้อความจาก backend
-          err.message || // ข้อความ error ทั่วไป
-          'สมัครสมาชิกไม่สำเร็จ';
-        alert(msg);
-      },
-    });
-  }
 
   resetRegisterForm() {
     this.registerUsername = '';
@@ -247,10 +264,11 @@ export class Header implements OnInit, OnDestroy {
   }
 
   logout() {
-    if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-      this.apiService.logout(); // ✨ เรียก API logout
-      this.showProfileMenu = false;
-      alert('ออกจากระบบสำเร็จ');
-    }
+  if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+    this.apiService.logout();
+    this.showProfileMenu = false;
+    this.router.navigate(['/']); 
+    alert('ออกจากระบบสำเร็จ');
   }
+}
 }

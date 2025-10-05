@@ -53,7 +53,82 @@ export class ApiGame {
       })
     );
   }
+  /**
+   * Register
+   */
+  register(userData: {
+    username: string;
+    email: string;
+    password: string;
+    profileImage?: File;
+  }): Observable<Users> {
+    const formData = new FormData();
+    formData.append('username', userData.username);
+    formData.append('email', userData.email);
+    formData.append('password', userData.password);
 
+    if (userData.profileImage) {
+      formData.append('profile_img', userData.profileImage);
+    }
+
+    return this.http.post<Users>(`${this.constants.API_ENDPOINT}/register`, formData).pipe(
+      tap((response: Users) => {
+        console.log('Register response:', response);
+
+        if (response.user) {
+          // เก็บ user ใน localStorage
+          localStorage.setItem('Auth', JSON.stringify(response.user));
+
+          // อัปเดต state
+          this.isLoggedInSubject.next(true);
+          this.currentUserSubject.next(response.user);
+        }
+      })
+    );
+  }
+
+  /**
+   * Update Profile
+   */
+ updateProfile(userData: {
+  username?: string;
+  email?: string;
+  profileImage?: File;
+}): Observable<Users> {
+  const formData = new FormData();
+  
+  // ลอง field names ต่างๆ
+  if (userData.username) {
+    formData.append('username', userData.username);
+  }
+  if (userData.email) {
+    formData.append('email', userData.email);
+  }
+  if (userData.profileImage) {
+    formData.append('profile_img', userData.profileImage); 
+    // หรือลอง 'profileImage', 'image', 'file' ดู
+  }
+
+  // *** อาจต้องส่ง user ID ***
+  const currentUser = this.getCurrentUser();
+  if (currentUser?.id) {
+    formData.append('id', currentUser.id);
+  }
+
+  return this.http.post<Users>(
+    `${this.constants.API_ENDPOINT}/editUser`,
+    formData
+  ).pipe(
+    tap((response: Users) => {
+      console.log('Update profile response:', response);
+
+      if (response.user) {
+        localStorage.setItem('Auth', JSON.stringify(response.user));
+        this.currentUserSubject.next(response.user);
+      }
+    })
+  );
+}
   /**
    * Logout
    */

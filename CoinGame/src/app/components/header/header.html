@@ -37,7 +37,7 @@
           onerror="this.src='assets/images/chick.png'">
         <div class="text-left">
           <p class="text-white font-medium text-sm">{{ currentUser.username }}</p>
-          <p class="text-[#5cead6] text-xs">{{ currentUser.wallet }} เหรียญ</p>
+          <p class="text-[#5cead6] text-xs">{{ currentUser.wallet }} บาท</p>
         </div>
         <svg class="w-5 h-5 text-[#5cead6] transition-transform duration-300" [class.rotate-180]="showProfileMenu"
           fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@
       <!-- Dropdown Menu -->
       <div *ngIf="showProfileMenu"
         class="absolute right-0 mt-2 w-56 bg-[#1e1e2f] border border-[#5cead6] border-opacity-30 rounded-lg shadow-xl overflow-hidden z-50">
-        <a href="#"
+        <a href="/profile"
           class="block px-4 py-3 text-gray-300 hover:bg-[#2a2a40] hover:text-[#5cead6] transition-colors duration-200">
           <div class="flex items-center gap-3">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
