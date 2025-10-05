@@ -116,13 +116,13 @@ export class Header {
 
     // ✅ ส่งไป API
     this.http.post('https://api-coin-game.vercel.app/register', formData).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         console.log('Register success:', res);
-        alert('สมัครสมาชิกสำเร็จ');
+        alert(res.message || 'สมัครสมาชิกสำเร็จ'); // ใช้ข้อความจาก backend
       },
       error: (err) => {
         console.error('Register error:', err);
-        alert('สมัครสมาชิกไม่สำเร็จ');
+        alert(err.error?.message || 'สมัครสมาชิกไม่สำเร็จ'); // ข้อความ error จาก backend
       },
     });
   }
