@@ -122,7 +122,11 @@ export class Header {
       },
       error: (err) => {
         console.error('Register error:', err);
-        alert(err.error?.message || 'สมัครสมาชิกไม่สำเร็จ'); // ข้อความ error จาก backend
+        const msg =
+          err.error?.message || // ข้อความจาก backend
+          err.message || // ข้อความ error ทั่วไป
+          'สมัครสมาชิกไม่สำเร็จ';
+        alert(msg);
       },
     });
   }
