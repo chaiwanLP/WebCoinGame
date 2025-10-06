@@ -90,45 +90,46 @@ export class ApiGame {
   /**
    * Update Profile
    */
- updateProfile(userData: {
-  username?: string;
-  email?: string;
-  profileImage?: File;
-}): Observable<Users> {
-  const formData = new FormData();
-  
-  // ลอง field names ต่างๆ
-  if (userData.username) {
-    formData.append('username', userData.username);
-  }
-  if (userData.email) {
-    formData.append('email', userData.email);
-  }
-  if (userData.profileImage) {
-    formData.append('profile_img', userData.profileImage); 
-    // หรือลอง 'profileImage', 'image', 'file' ดู
-  }
+  updateProfile(userData: {
+    uid?: string;
+    username?: string;
+    email?: string;
+    profileImage?: File;
+  }): Observable<Users> {
+    const formData = new FormData();
+    console.log(userData.uid);
 
-  // *** อาจต้องส่ง user ID ***
-  const currentUser = this.getCurrentUser();
-  if (currentUser?.id) {
-    formData.append('id', currentUser.id);
+    if (userData.username) {
+      formData.append('username', userData.username);
+    }
+    if (userData.email) {
+      formData.append('email', userData.email);
+    }
+    if (userData.profileImage) {
+      formData.append('profile_img', userData.profileImage);
+    }
+
+    const currentUser = this.getCurrentUser();
+    if (currentUser?.id) {
+      formData.append('uid', currentUser.id);
+    }
+    console.log('this uid', currentUser?.id);
+    for (const pair of formData.entries()) {
+      console.log(pair[0] + ':', pair[1]);
+    }
+
+    console.log(`${this.constants.API_ENDPOINT}/editUser`);
+    return this.http.post<Users>(`${this.constants.API_ENDPOINT}/editUser`, formData).pipe(
+      tap((response: Users) => {
+        console.log('Update profile response:', response);
+
+        if (response.user) {
+          localStorage.setItem('Auth', JSON.stringify(response.user));
+          this.currentUserSubject.next(response.user);
+        }
+      })
+    );
   }
-
-  return this.http.post<Users>(
-    `${this.constants.API_ENDPOINT}/editUser`,
-    formData
-  ).pipe(
-    tap((response: Users) => {
-      console.log('Update profile response:', response);
-
-      if (response.user) {
-        localStorage.setItem('Auth', JSON.stringify(response.user));
-        this.currentUserSubject.next(response.user);
-      }
-    })
-  );
-}
   /**
    * Logout
    */

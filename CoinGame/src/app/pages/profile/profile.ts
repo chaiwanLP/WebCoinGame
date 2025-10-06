@@ -98,6 +98,7 @@ export class Profile implements OnInit {
 
   saveProfile(): void {
     if (!this.currentUser) return;
+    console.log('uid is ', this.currentUser.id);
 
     // อัปเดตข้อมูลใน object
     const updatedUser: User = {
@@ -106,21 +107,32 @@ export class Profile implements OnInit {
       email: this.editEmail,
       profile_img: this.editProfileImagePreview || this.currentUser.profile_img,
     };
+    this.apiService
+      .updateProfile({
+        uid: this.currentUser.id,
+        username: this.editUsername,
+        email: this.editEmail,
+        profileImage: this.editProfileImage || undefined,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Register success:', response);
+          this.closeEditModal();
+          alert(`แก้ไขข้อมูลสำเร็จ`);
+        },
+        error: (error) => {
+          console.error('Register error:', error);
 
-    // บันทึกลง localStorage
+          const errorMessage =
+            error.error?.message || error.message || 'แก้ไขไม่สำเร็จ กรุณาลองใหม่';
+          alert(errorMessage);
+        },
+      });
+
     localStorage.setItem('Auth', JSON.stringify(updatedUser));
 
     // อัปเดต currentUser
     this.currentUser = updatedUser;
-
-    // อัปเดต API Service state
-    const apiServiceAny = this.apiService as any;
-    if (apiServiceAny.currentUserSubject) {
-      apiServiceAny.currentUserSubject.next(updatedUser);
-    }
-
-    this.closeEditModal();
-    alert('บันทึกข้อมูลสำเร็จ');
   }
 
   logout(): void {
