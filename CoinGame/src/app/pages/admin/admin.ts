@@ -15,7 +15,7 @@ interface TopGame {
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule],
   templateUrl: './admin.html',
   styleUrl: './admin.css'
 })

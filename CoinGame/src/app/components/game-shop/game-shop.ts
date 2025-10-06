@@ -1,39 +1,68 @@
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { ApiGame } from '../../services/api-game';
 
 @Component({
   selector: 'app-shop',
+  standalone: true,
+  imports: [FormsModule, CommonModule],
   templateUrl: './game-shop.html',
   styleUrls: ['./game-shop.css'],
-  imports: [FormsModule, CommonModule],
 })
 export class ShopComponent implements OnInit {
   games: any[] = [];
+  filteredGames: any[] = [];
   game_types: any[] = [];
   selectedTypeId: string = '';
   keyword: string = '';
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+  constructor(private apiService: ApiGame, private router: Router) {}
 
-  async ngOnInit() {
-    await this.getAllGame();
-    await this.getGame_type();
+  ngOnInit(): void {
+    this.loadGames();
+    this.loadGameTypes();
   }
 
-  async getAllGame() {
-    this.games = await firstValueFrom(
-      this.http.get<any[]>('https://api-coin-game.vercel.app/getAllGame')
-    );
-    this.cdr.detectChanges(); // บังคับ Angular update view
+  loadGames(): void {
+    this.apiService.getAllGames().subscribe({
+      next: (response) => {
+        this.games = response;
+        this.filteredGames = response; // แสดงทั้งหมดตอนเริ่มต้น
+      },
+      error: (error) => {
+        console.error('Error loading games:', error);
+      },
+    });
   }
 
-  async getGame_type() {
-    this.game_types = await firstValueFrom(
-      this.http.get<any[]>('https://api-coin-game.vercel.app/getGameType')
-    );
-    this.cdr.detectChanges(); // บังคับ Angular update view
+  loadGameTypes(): void {
+    this.apiService.getGameTypes().subscribe({
+      next: (response) => {
+        this.game_types = response;
+      },
+      error: (error) => {
+        console.error('Error loading game types:', error);
+      },
+    });
+  }
+
+  searchGames(): void {
+    this.filteredGames = this.games.filter((game) => {
+      // Filter by keyword
+      const matchKeyword = this.keyword
+        ? game.game_name.toLowerCase().includes(this.keyword.toLowerCase())
+        : true;
+
+      // Filter by type
+      const matchType = this.selectedTypeId ? game.tid === this.selectedTypeId : true;
+
+      return matchKeyword && matchType;
+    });
+  }
+
+  viewGameDetail(game: any): void {
+    this.router.navigate(['/game', game.gid]);
   }
 }

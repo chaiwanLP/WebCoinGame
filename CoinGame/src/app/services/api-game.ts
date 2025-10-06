@@ -152,4 +152,22 @@ export class ApiGame {
   isAuthenticated(): boolean {
     return this.isLoggedInSubject.value;
   }
+
+  /**
+   * Get All Games
+   */
+  getAllGames(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getAllGame`);
+  }
+
+  /**
+   * Get Game Types
+   */
+  getGameTypes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getGameType`);
+  }
+   getGameById(gid: string): Observable<any> {
+    return this.http.get<any>(`${this.constants.API_ENDPOINT}/getGameById?gid=${gid}`);
+  }
+  
 }

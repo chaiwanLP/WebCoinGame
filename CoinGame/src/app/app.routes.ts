@@ -13,9 +13,12 @@ export const routes: Routes = [
   },
   {
     path: 'profile',
-    loadComponent: () =>
-      import('./pages/profile/profile').then((m) => m.Profile),
+    loadComponent: () => import('./pages/profile/profile').then((m) => m.Profile),
     canActivate: [authGuard],
+  },
+  {
+    path: 'game/:id',
+    loadComponent: () => import('./pages/gamedetail/gamedetail').then((m) => m.GameDetail),
   },
   {
     path: '**',
