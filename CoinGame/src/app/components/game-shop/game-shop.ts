@@ -1,3 +1,4 @@
+import { Users } from './../../models/users.model';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
@@ -63,6 +64,11 @@ export class ShopComponent implements OnInit {
   }
 
   viewGameDetail(game: any): void {
-    this.router.navigate(['/game', game.gid]);
+    if (!this.apiService.isAuthenticated()) {
+      alert('Please log in to view game details.');
+      this.router.navigate(['/']);
+    }else{
+      this.router.navigate(['/game', game.gid]);
+    }
   }
 }

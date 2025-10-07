@@ -21,6 +21,7 @@ export class ApiGame {
     this.checkAuth();
   }
 
+
   // เช็คว่า login อยู่หรือไม่
   private checkAuth(): void {
     const userJson = localStorage.getItem('Auth');
