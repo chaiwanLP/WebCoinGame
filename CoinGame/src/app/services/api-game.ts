@@ -21,7 +21,6 @@ export class ApiGame {
     this.checkAuth();
   }
 
-
   // เช็คว่า login อยู่หรือไม่
   private checkAuth(): void {
     const userJson = localStorage.getItem('Auth');
@@ -167,8 +166,11 @@ export class ApiGame {
   getGameTypes(): Observable<any[]> {
     return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getGameType`);
   }
-   getGameById(gid: string): Observable<any> {
+  getGameById(gid: string): Observable<any> {
     return this.http.get<any>(`${this.constants.API_ENDPOINT}/getGameById?gid=${gid}`);
   }
+
   
+
+
 }
