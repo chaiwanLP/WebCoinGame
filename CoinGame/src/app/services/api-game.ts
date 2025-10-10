@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 import { Constants } from '../config/constants';
 import { User, Users } from '../models/users.model';
 
@@ -17,11 +17,12 @@ export class ApiGame {
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private constants: Constants, private http: HttpClient) {
-    // เช็คว่ามี user ใน localStorage หรือไม่
     this.checkAuth();
   }
 
-  // เช็คว่า login อยู่หรือไม่
+  /**
+   * ตรวจสอบสถานะผู้ใช้จาก localStorage
+   */
   private checkAuth(): void {
     const userJson = localStorage.getItem('Auth');
 
@@ -41,18 +42,23 @@ export class ApiGame {
    * Login
    */
   login(email: string, password: string): Observable<Users> {
-    return this.http.post<Users>(`${this.constants.API_ENDPOINT}/login`, { email, password }).pipe(
-      tap((response: Users) => {
-        console.log('Login response:', response);
-
-        if (response.user) {
-          localStorage.setItem('Auth', JSON.stringify(response.user));
-          this.isLoggedInSubject.next(true);
-          this.currentUserSubject.next(response.user);
-        }
-      })
-    );
+    return this.http
+      .post<Users>(`${this.constants.API_ENDPOINT}/login`, { email, password })
+      .pipe(
+        tap((response: Users) => {
+          if (response.user) {
+            localStorage.setItem('Auth', JSON.stringify(response.user));
+            this.isLoggedInSubject.next(true);
+            this.currentUserSubject.next(response.user);
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ Login failed:', error);
+          return throwError(() => error);
+        })
+      );
   }
+
   /**
    * Register
    */
@@ -71,20 +77,22 @@ export class ApiGame {
       formData.append('profile_img', userData.profileImage);
     }
 
-    return this.http.post<Users>(`${this.constants.API_ENDPOINT}/register`, formData).pipe(
-      tap((response: Users) => {
-        console.log('Register response:', response);
-
-        if (response.user) {
-          // เก็บ user ใน localStorage
-          localStorage.setItem('Auth', JSON.stringify(response.user));
-
-          // อัปเดต state
-          this.isLoggedInSubject.next(true);
-          this.currentUserSubject.next(response.user);
-        }
-      })
-    );
+    return this.http
+      .post<Users>(`${this.constants.API_ENDPOINT}/register`, formData)
+      .pipe(
+        tap((response: Users) => {
+          console.log('✅ Register response:', response);
+          if (response.user) {
+            localStorage.setItem('Auth', JSON.stringify(response.user));
+            this.isLoggedInSubject.next(true);
+            this.currentUserSubject.next(response.user);
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ Register failed:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   /**
@@ -97,7 +105,6 @@ export class ApiGame {
     profileImage?: File;
   }): Observable<Users> {
     const formData = new FormData();
-    console.log(userData.uid);
 
     if (userData.username) {
       formData.append('username', userData.username);
@@ -113,23 +120,24 @@ export class ApiGame {
     if (currentUser?.id) {
       formData.append('uid', currentUser.id);
     }
-    console.log('this uid', currentUser?.id);
-    for (const pair of formData.entries()) {
-      console.log(pair[0] + ':', pair[1]);
-    }
 
-    console.log(`${this.constants.API_ENDPOINT}/editUser`);
-    return this.http.post<Users>(`${this.constants.API_ENDPOINT}/editUser`, formData).pipe(
-      tap((response: Users) => {
-        console.log('Update profile response:', response);
-
-        if (response.user) {
-          localStorage.setItem('Auth', JSON.stringify(response.user));
-          this.currentUserSubject.next(response.user);
-        }
-      })
-    );
+    return this.http
+      .post<Users>(`${this.constants.API_ENDPOINT}/editUser`, formData)
+      .pipe(
+        tap((response: Users) => {
+          console.log('✅ Update profile response:', response);
+          if (response.user) {
+            localStorage.setItem('Auth', JSON.stringify(response.user));
+            this.currentUserSubject.next(response.user);
+          }
+        }),
+        catchError((error) => {
+          console.error('❌ Update profile failed:', error);
+          return throwError(() => error);
+        })
+      );
   }
+
   /**
    * Logout
    */
@@ -154,23 +162,69 @@ export class ApiGame {
   }
 
   /**
+   * Get Authorization Headers (สำหรับ API ที่ต้องใช้ token)
+   */
+  private getAuthHeaders(): { headers?: HttpHeaders } {
+    const user = this.getCurrentUser();
+    if (user && (user as any).token) {
+      return {
+        headers: new HttpHeaders({
+          Authorization: `Bearer ${(user as any).token}`,
+        }),
+      };
+    }
+    return {};
+  }
+
+  /**
    * Get All Games
    */
   getAllGames(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getAllGame`);
+    return this.http
+      .get<any[]>(`${this.constants.API_ENDPOINT}/getAllGame`, this.getAuthHeaders())
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Get all games failed:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   /**
    * Get Game Types
    */
   getGameTypes(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getGameType`);
+    return this.http
+      .get<any[]>(`${this.constants.API_ENDPOINT}/getGameType`, this.getAuthHeaders())
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Get game types failed:', error);
+          return throwError(() => error);
+        })
+      );
   }
+
+  /**
+   * Get Game by ID
+   */
   getGameById(gid: string): Observable<any> {
-    return this.http.get<any>(`${this.constants.API_ENDPOINT}/getGameById?gid=${gid}`);
+    return this.http
+      .get<any>(`${this.constants.API_ENDPOINT}/getGameById?gid=${gid}`, this.getAuthHeaders())
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Get game by id failed:', error);
+          return throwError(() => error);
+        })
+      );
   }
-
-  
-
-
+  getBalance(): Observable<any> {
+    return this.http
+      .get<any>(`${this.constants.API_ENDPOINT}/getBalance`, this.getAuthHeaders())
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Get balance failed:', error);
+          return throwError(() => error);
+        })
+      );
+  }
 }

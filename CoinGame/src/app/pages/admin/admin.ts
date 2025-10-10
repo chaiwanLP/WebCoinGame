@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { ApiGame } from '../../services/api-game';
+import { Router } from '@angular/router';
+import { ApiGame } from '../../services/api-game'; 
 import { User } from '../../models/users.model';
 
 interface TopGame {
@@ -17,13 +17,12 @@ interface TopGame {
   standalone: true,
   imports: [CommonModule],
   templateUrl: './admin.html',
-  styleUrl: './admin.css'
+  styleUrls: ['./admin.css'] 
 })
 export class Admin implements OnInit {
   currentUser: User | null = null;
   activeMenu = 'dashboard';
 
-  // Stats
   stats = {
     totalArticles: 5,
     totalUsers: 3,
@@ -31,7 +30,6 @@ export class Admin implements OnInit {
     totalOrders: 740
   };
 
-  // Top 5 Games
   topGames: TopGame[] = [
     { rank: 1, name: 'Fantasy RPG Quest', category: 'RPG', sales: 200, revenue: 179800 },
     { rank: 2, name: 'Sports Champion', category: 'กีฬา', sales: 180, revenue: 143820 },
@@ -40,13 +38,16 @@ export class Admin implements OnInit {
     { rank: 5, name: 'Strategy Master', category: 'กลยุทธ์', sales: 90, revenue: 98910 }
   ];
 
-  constructor(
-    private apiService: ApiGame,
-    private router: Router
-  ) {}
+  constructor(private apiService: ApiGame, private router: Router) {}
 
   ngOnInit(): void {
     this.currentUser = this.apiService.getCurrentUser();
+
+    // ป้องกันคนไม่ใช่ admin เข้าหน้านี้โดยตรง (กัน double protection)
+    if (!this.currentUser || this.currentUser.role !== 'admin') {
+      alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+      this.router.navigate(['/']);
+    }
   }
 
   setActiveMenu(menu: string): void {
