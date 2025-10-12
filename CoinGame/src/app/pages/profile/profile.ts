@@ -6,11 +6,14 @@ import { ApiGame } from '../../services/api-game';
 import { User } from '../../models/users.model';
 
 interface OwnedGame {
-  id: string;
-  title: string;
-  img: string;
-  category: string;
-  purchaseDate: Date;
+  gid: string;
+  game_name: string;
+  game_img: string;
+  description: string;
+  price: number;
+  release_date: string;
+  type_name: string;
+  tid: string;
 }
 
 @Component({
@@ -66,16 +69,14 @@ export class Profile implements OnInit {
   }
 
   loadOwnedGames(): void {
-    // TODO: Call API to get owned games
-    this.ownedGames = [
-      {
-        id: '1',
-        title: 'GTA V',
-        img: '',
-        category: 'Action',
-        purchaseDate: new Date(),
+    this.apiService.getOwnGame().subscribe({
+      next: (response) => {
+        this.ownedGames = response;
       },
-    ];
+      error: (error) => {
+        console.error('Error loading games:', error);
+      },
+    });
   }
 
   get totalPages(): number {
@@ -139,6 +140,10 @@ export class Profile implements OnInit {
           this.closeEditModal();
           alert(`แก้ไขข้อมูลสำเร็จ`);
           window.location.reload();
+          localStorage.setItem('Auth', JSON.stringify(updatedUser));
+
+          // อัปเดต currentUser
+          this.currentUser = updatedUser;
         },
         error: (error) => {
           console.error('Edit error:', error);
@@ -148,11 +153,6 @@ export class Profile implements OnInit {
           alert(errorMessage);
         },
       });
-
-    localStorage.setItem('Auth', JSON.stringify(updatedUser));
-
-    // อัปเดต currentUser
-    this.currentUser = updatedUser;
   }
 
   logout(): void {

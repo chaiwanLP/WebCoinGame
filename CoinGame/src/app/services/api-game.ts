@@ -82,6 +82,22 @@ export class ApiGame {
         })
       );
   }
+  getOwnGame() {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
+    }
+    const uid = currentUser?.id;
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/profile?uid=${uid}`).pipe(
+      tap((response) => {
+        console.log('game', response);
+      }),
+      catchError((error) => {
+        console.error('❌ Get wallet failed:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 
   /**
    * Register
