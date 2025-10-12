@@ -7,6 +7,7 @@ import { User, Users } from '../models/users.model';
 
 // ✅ 1. ย้าย Interface ของ Game มาไว้ที่นี่เพื่อความเป็นระเบียบ
 export interface Game {
+  cid: string;
   gid: string;
   game_name: string;
   price: number;
@@ -68,6 +69,18 @@ export class ApiGame {
         this.logout();
       }
     }
+  }
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  public loading$ = this.loadingSubject.asObservable();
+  fetchCartItems(): Observable<Game[]> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
+    }
+    const uid = currentUser?.id;
+    return this.http
+      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart?uid=${uid}`)
+      .pipe(tap((items) => this.cartItemsSubject.next(items)));
   }
 
   login(email: string, password: string): Observable<Users> {
@@ -240,13 +253,10 @@ export class ApiGame {
     if (!userId) return;
 
     this.http
-      .get<Game[]>(
-        `${this.constants.API_ENDPOINT}/cart`,
-        {
-          ...this.getAuthHeaders(),
-          params: { uid: userId }
-        }
-      )
+      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart`, {
+        ...this.getAuthHeaders(),
+        params: { uid: userId },
+      })
       .subscribe({
         next: (items) => this.cartItemsSubject.next(items || []),
         error: (err) => this.cartItemsSubject.next([]),
@@ -265,27 +275,43 @@ export class ApiGame {
       )
       .pipe(
         tap((response) => {
-          alert(response.message);
+          // alert(response.message);
           this.getCart();
         })
       );
   }
 
-  removeFromCart(gid: string): Observable<any> {
-    const currentUser = this.getCurrentUser();
-    const userId = currentUser?.id || (currentUser as any)?.uid;
-    if (!userId) return throwError(() => new Error('User not logged in'));
+  removeFromCart(cid: string): Observable<any> {
+    return this.http.get<any>(`${this.constants.API_ENDPOINT}/delete-cart?cid=${cid}`).pipe(
+      tap((res) => {
+        const deletedGid = res.gid;
+        if (!deletedGid) {
+          console.warn('ไม่พบ GID ที่ถูกลบใน response');
+          return;
+        }
+
+        const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== deletedGid);
+        this.cartItemsSubject.next(updatedItems);
+      }),
+      catchError((error) => {
+        console.error('ลบเกมออกจากตะกร้าล้มเหลว:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+  checkOwnGame(gid: string): Observable<any> {
+    const uid = this.getCurrentUser()?.id;
+    if (!uid) return throwError(() => new Error('User not logged in'));
 
     return this.http
-      .post<any>(
-        `${this.constants.API_ENDPOINT}/delete-cart`,
-        { uid: userId, gid },
-        this.getAuthHeaders()
-      )
+      .get<any>(`${this.constants.API_ENDPOINT}/checkOwnGame?uid=${uid}&gid=${gid}`)
       .pipe(
-        tap(() => {
-          const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== gid);
-          this.cartItemsSubject.next(updatedItems);
+        tap((res) => {
+          console.log('Check own game response:', res.message);
+        }),
+        catchError((error) => {
+          console.error('ตรวจสอบเกมล้มเหลว:', error);
+          return throwError(() => error);
         })
       );
   }
@@ -303,15 +329,15 @@ export class ApiGame {
       return throwError(() => new Error('ยอดเงินในกระเป๋าไม่เพียงพอ'));
     }
 
-    const orderData = { uid: userId, game_ids: items.map((item) => item.gid), total_price: total };
+    const orderData = { uid: userId, cid: items.map((item) => item.cid), total: total };
+    console.log('data post', orderData);
 
-    // ‼️ คุณต้องสร้าง API Endpoint นี้ที่ Backend
     return this.http
-      .post(`${this.constants.API_ENDPOINT}/createOrder`, orderData, this.getAuthHeaders())
+      .post(`${this.constants.API_ENDPOINT}/buy-game`, orderData, this.getAuthHeaders())
       .pipe(
         tap(() => {
-          this.getCart(); // โหลดตะกร้าใหม่ (ซึ่งควรจะว่างเปล่า)
-          this.refreshWallet(); // อัปเดตยอดเงิน
+          this.getCart();
+          this.refreshWallet();
         })
       );
   }
@@ -348,20 +374,12 @@ export class ApiGame {
   //  Admin Methods
   // ========================================
 
-  addGame(gameData: any): Observable<any> {
-    return this.http.post<any>(
-      `${this.constants.API_ENDPOINT}/addGame`,
-      gameData,
-      this.getAuthHeaders()
-    );
+  addGame(formData: FormData): Observable<any> {
+    return this.http.post(`${this.constants.API_ENDPOINT}/addGame`, formData);
   }
 
-  editGame(gameData: any): Observable<any> {
-    return this.http.post<any>(
-      `${this.constants.API_ENDPOINT}/editGame`,
-      gameData,
-      this.getAuthHeaders()
-    );
+  editGame(formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.constants.API_ENDPOINT}/editGame`, formData);
   }
 
   deleteGame(gid: string): Observable<any> {

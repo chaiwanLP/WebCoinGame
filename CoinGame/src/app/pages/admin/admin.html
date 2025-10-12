@@ -52,11 +52,20 @@
         </button>
       </div>
       <div class="mb-6 flex items-center gap-4">
-        <input type="text" placeholder="ค้นหาเกม..." class="flex-1 bg-[#2a2a4e] border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500">
-        <select class="bg-[#2a2a4e] border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500">
-          <option>ทุกประเภท</option>
-          <option *ngFor="let type of gameTypes">{{ type.type_name }}</option>
-        </select>
+        <!-- ค้นหาเกม -->
+<input type="text" placeholder="ค้นหาเกม..." 
+  [(ngModel)]="searchTerm" (input)="filterGames()" 
+  class="flex-1 bg-[#2a2a4e] border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500">
+
+<!-- เลือกประเภท -->
+<select [(ngModel)]="selectedFilterTypeId" (change)="filterGames()"
+  class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400">
+  <option value="">ทุกประเภท</option>
+  <option *ngFor="let cat of gameTypes" [value]="cat.tid">
+    {{ cat.name_type }}
+  </option>
+</select>
+
       </div>
       <div class="bg-[#2a2a4e] rounded-xl border border-gray-700 overflow-hidden">
         <div *ngIf="isLoadingGames" class="p-8 text-center text-gray-400">กำลังโหลดข้อมูล...</div>
@@ -65,13 +74,20 @@
           <table class="w-full text-sm text-left">
             <thead class="bg-transparent"><tr class="border-b border-gray-700"><th class="px-6 py-4 text-gray-400 font-medium">รูป</th><th class="px-6 py-4 text-gray-400 font-medium">ชื่อเกม</th><th class="px-6 py-4 text-gray-400 font-medium">ประเภท</th><th class="px-6 py-4 text-gray-400 font-medium">ราคา</th><th class="px-6 py-4 text-gray-400 font-medium">การจัดการ</th></tr></thead>
             <tbody>
-              <tr *ngFor="let game of allGames" class="border-b border-gray-800 hover:bg-[#333355]">
-                <td class="p-4"><img [src]="game.game_img" [alt]="game.game_name" class="w-16 h-10 object-cover rounded-md"></td>
-                <td class="px-6 py-4 text-white font-semibold">{{ game.game_name }}</td>
-                <td class="px-6 py-4">{{ game.name_type }}</td>
-                <td class="px-6 py-4">{{ game.price | number }} บาท</td>
-                <td class="px-6 py-4"><div class="flex gap-3"><button (click)="openEditGameModal(game)" class="action-btn-edit">แก้ไข</button><button (click)="onDeleteGame(game.gid, game.game_name)" class="action-btn-delete">ลบ</button></div></td>
-              </tr>
+              <tr *ngFor="let game of filteredGames" class="border-b border-gray-800 hover:bg-[#333355]">
+              <td class="p-4"><img [src]="game.game_img" [alt]="game.game_name" class="w-16 h-10 object-cover rounded-md"></td>
+              <td class="px-6 py-4 text-white font-semibold">{{ game.game_name }}</td>
+              <td class="px-6 py-4">{{ game.name_type }}</td>
+              <td class="px-6 py-4">{{ game.price | number }} บาท</td>
+              <td class="px-6 py-4">
+                <div class="flex gap-3">
+                  <button (click)="openEditGameModal(game)" class="action-btn-edit">แก้ไข</button>
+                  <button (click)="onDeleteGame(game.gid, game.game_name)" class="action-btn-delete">ลบ</button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredGames.length === 0"><td colspan="5" class="text-center py-8 text-gray-500">ไม่พบข้อมูลเกม</td></tr>
+
               <tr *ngIf="allGames.length === 0"><td colspan="5" class="text-center py-8 text-gray-500">ไม่พบข้อมูลเกม</td></tr>
             </tbody>
           </table>
@@ -90,10 +106,30 @@
         <div><label class="block text-sm font-medium text-gray-300 mb-1">ชื่อเกม</label><input type="text" [(ngModel)]="currentGame.game_name" name="game_name" required class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></div>
         <div class="grid grid-cols-2 gap-4">
           <div><label class="block text-sm font-medium text-gray-300 mb-1">ราคา (บาท)</label><input type="number" [(ngModel)]="currentGame.price" name="price" required class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></div>
-          <div><label class="block text-sm font-medium text-gray-300 mb-1">ประเภทเกม</label><select [(ngModel)]="currentGame.tid" name="tid" required class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"><option [ngValue]="undefined" disabled>-- เลือกประเภท --</option><option *ngFor="let type of gameTypes" [value]="type.tid">{{ type.type_name }}</option></select></div>
+         <select [(ngModel)]="selectedTypeId" name="tid"
+  class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400">
+
+      <option *ngFor="let cat of gameTypes" [value]="cat.tid">
+        {{ cat.name_type }}
+      </option>
+    </select>
+
         </div>
         <div><label class="block text-sm font-medium text-gray-300 mb-1">คำอธิบาย</label><textarea [(ngModel)]="currentGame.description" name="description" rows="4" class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></textarea></div>
-        <div><label class="block text-sm font-medium text-gray-300 mb-1">URL รูปภาพ</label><input type="text" [(ngModel)]="currentGame.game_img" name="game_img" class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></div>
+         <div>
+        <label class="block text-gray-300 text-sm font-medium mb-2">เลือกรูปโปรไฟล์</label>
+        <div class="flex items-center gap-4">
+          <label
+            class="flex-1 bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-gray-400 cursor-pointer hover:border-[#5cead6] transition-all duration-300">
+            <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden">
+            <span class="text-sm">{{ GameImage ? GameImage.name : 'เลือกไฟล์...' }}</span>
+          </label>
+          <div *ngIf="GameImagePreview"
+            class="w-16 h-16 rounded-full overflow-hidden border-2 border-[#5cead6]">
+            <img [src]="GameImagePreview" alt="Preview" class="w-full h-full object-cover">
+          </div>
+        </div>
+      </div>
         <div class="flex justify-end gap-4 pt-4">
           <button type="button" (click)="closeGameModal()" [disabled]="isSubmittingForm" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50">ยกเลิก</button>
           <button type="submit" [disabled]="isSubmittingForm" class="px-4 py-2 bg-[#e94560] text-white rounded-md font-semibold hover:bg-[#d43d56] disabled:opacity-50 disabled:cursor-wait">{{ isSubmittingForm ? 'กำลังบันทึก...' : (isEditing ? 'บันทึกการเปลี่ยนแปลง' : 'เพิ่มเกม') }}</button>
