@@ -1,55 +1,56 @@
 <div class="max-w-6xl mx-auto px-4 py-6">
   <!-- Search bar -->
   <div class="flex items-center gap-3 mb-6">
-    <input
-      type="text"
-      placeholder="ค้นหาเกม...."
-      [(ngModel)]="keyword"
-      class="flex-1 px-4 py-2 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400"
-    />
+    <input type="text" placeholder="ค้นหาเกม...." [(ngModel)]="keyword" (keyup.enter)="searchGames()"
+      class="flex-1 px-4 py-2 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400" />
 
-    <select
-      [(ngModel)]="category"
-      class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400"
-    >
-      <option value="">ประเภท</option>
-      <option *ngFor="let cat of categories" [value]="cat">{{cat}}</option>
+    <select [(ngModel)]="selectedTypeId"
+      class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400">
+      <option value="">ทุกประเภท</option>
+      <option *ngFor="let cat of game_types" [value]="cat.tid">
+        {{ cat.name_type }}
+      </option>
     </select>
 
-    <button
-      class="px-4 py-2 rounded-md bg-green-400 text-black font-semibold hover:bg-green-500 transition"
-    >
+    <button (click)="searchGames()"
+      class="px-4 py-2 rounded-md bg-green-400 text-black font-semibold hover:bg-green-500 transition">
       ค้นหา
     </button>
 
     <!-- ตะกร้า -->
-    <button class="ml-2 p-2 border border-yellow-400 text-yellow-400 rounded-md hover:bg-yellow-400 hover:text-black transition">
+    <button  (click)="checkCart()"
+      class="ml-2 p-2 border border-yellow-400 text-yellow-400 rounded-md hover:bg-yellow-400 hover:text-black transition">
       🛒
     </button>
   </div>
 
-  <!-- Title -->
-  <h2 class="text-xl font-semibold text-white mt-6 mb-4">ร้านค้าเกม</h2>
 
   <!-- Game list -->
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    <div
-      *ngFor="let game of filteredGames"
-      class="bg-gray-800 rounded-xl overflow-hidden shadow-md flex flex-col"
-    >
-      <img [src]="game.img" alt="{{game.title}}" class="w-full h-40 object-contain bg-gray-200" />
+    <div *ngFor="let game of filteredGames" class="bg-gray-800 rounded-xl overflow-hidden shadow-md flex flex-col relative">
+      <!-- Type badge บนรูป -->
+      <div class="absolute top-2 left-2 z-10">
+        <span class="inline-block px-3 py-1 bg-black/70 backdrop-blur-sm text-white text-xs font-medium rounded-full border border-green-400/30">
+          {{ game.type_name || game.name_type }}
+        </span>
+      </div>
+
+      <img [src]="game.game_img" alt="{{game.game_name}}" class="w-full h-40 object-cover bg-gray-200 rounded-t-xl" />
 
       <div class="p-4 flex flex-col flex-1">
-        <h3 class="text-lg font-semibold text-green-300">{{ game.title }}</h3>
-        <p class="text-gray-400">{{ game.category }}</p>
+        <h3 class="text-lg font-semibold text-green-300">{{ game.game_name }}</h3>
         <p class="text-green-400 font-semibold mt-2">{{ game.price | number:'1.2-2' }} บาท</p>
 
-        <button
-          class="mt-auto w-full py-2 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition"
-        >
+        <button (click)="viewGameDetail(game)"
+          class="mt-auto w-full py-2 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition">
           รายละเอียด
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- No results -->
+  <div *ngIf="filteredGames.length === 0" class="text-center py-20">
+    <p class="text-gray-400 text-lg">ไม่พบเกมที่ค้นหา</p>
   </div>
 </div>

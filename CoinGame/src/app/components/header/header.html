@@ -6,9 +6,11 @@
     <a href="#" class="text-gray-300 hover:text-[#5cead6] font-medium transition-colors duration-300">
       ร้านค้า
     </a>
-    <a href="#" class="text-gray-300 hover:text-[#5cead6] font-medium transition-colors duration-300">
+    <a href="/topup" (click)="checkLoginBeforeTopUp($event)"
+      class="text-gray-300 hover:text-[#5cead6] font-medium transition-colors duration-300">
       เติมเงิน
     </a>
+
     <a href="#" class="text-gray-300 hover:text-[#5cead6] font-medium transition-colors duration-300">
       อันดับ
     </a>
@@ -33,11 +35,10 @@
       <button (click)="toggleProfileMenu()"
         class="flex items-center gap-3 px-4 py-2 bg-[#1e1e2f] rounded-lg border-2 border-[#5cead6] hover:bg-[#2a2a40] transition-all duration-300">
         <img [src]="currentUser.profile_img" [alt]="currentUser.username"
-          class="w-10 h-10 rounded-full object-cover border-2 border-[#5cead6]"
-          onerror="this.src='assets/images/chick.png'">
+          class="w-10 h-10 rounded-full object-cover border-2 border-[#5cead6]">
         <div class="text-left">
           <p class="text-white font-medium text-sm">{{ currentUser.username }}</p>
-          <p class="text-[#5cead6] text-xs">{{ currentUser.wallet }} บาท</p>
+          <p class="text-[#5cead6] text-xs">{{ currentUser.wallet | number}} บาท</p>
         </div>
         <svg class="w-5 h-5 text-[#5cead6] transition-transform duration-300" [class.rotate-180]="showProfileMenu"
           fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,12 +154,13 @@
   </div>
 </div>
 
-<!-- Register Modal (เดิม ไม่แก้) -->
+<!-- Register Modal -->
 <div *ngIf="showRegister" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
   (click)="closeRegister()">
   <div
     class="bg-gradient-to-br from-[#2a2a40] to-[#1e1e2f] rounded-2xl w-11/12 max-w-md p-10 shadow-2xl border border-[#5cead6] border-opacity-20 relative max-h-[90vh] overflow-y-auto"
-    (click)="$event.stopPropagation()">
+    (click)="$event.stopPropagation()"> <!-- ป้องกัน modal ปิดเมื่อคลิกภายใน -->
+
     <button (click)="closeRegister()"
       class="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-4xl leading-none transition-colors duration-300">
       ×
@@ -166,27 +168,21 @@
 
     <h2 class="text-3xl font-bold text-[#5cead6] mb-8 text-center">สมัครสมาชิก</h2>
 
-    <form (ngSubmit)="onRegisterSubmit()" class="space-y-5">
+    <form (ngSubmit)="onRegisterSubmit($event)" class="space-y-5">
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          ชื่อผู้ใช้
-        </label>
+        <label class="block text-gray-300 text-sm font-medium mb-2">ชื่อผู้ใช้</label>
         <input type="text" [(ngModel)]="registerUsername" name="registerUsername" placeholder="กรอกชื่อผู้ใช้" required
           class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300">
       </div>
 
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          อีเมล
-        </label>
+        <label class="block text-gray-300 text-sm font-medium mb-2">อีเมล</label>
         <input type="email" [(ngModel)]="registerEmail" name="registerEmail" placeholder="กรอกอีเมล" required
           class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300">
       </div>
 
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          รหัสผ่าน
-        </label>
+        <label class="block text-gray-300 text-sm font-medium mb-2">รหัสผ่าน</label>
         <div class="relative">
           <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="registerPassword" name="registerPassword"
             placeholder="กรอกรหัสผ่าน" required
@@ -200,9 +196,7 @@
       </div>
 
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          รหัสผ่านยืนยัน
-        </label>
+        <label class="block text-gray-300 text-sm font-medium mb-2">รหัสผ่านยืนยัน</label>
         <div class="relative">
           <input [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="registerConfirmPassword"
             name="registerConfirmPassword" placeholder="กรอกรหัสผ่านอีกครั้ง" required
@@ -216,9 +210,7 @@
       </div>
 
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          เลือกรูปโปรไฟล์
-        </label>
+        <label class="block text-gray-300 text-sm font-medium mb-2">เลือกรูปโปรไฟล์</label>
         <div class="flex items-center gap-4">
           <label
             class="flex-1 bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-gray-400 cursor-pointer hover:border-[#5cead6] transition-all duration-300">

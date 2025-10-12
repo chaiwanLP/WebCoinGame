@@ -52,7 +52,7 @@ export class Profile implements OnInit {
       {
         id: '1',
         title: 'GTA V',
-        img: 'https://example.com/image.jpg',
+        img: '',
         category: 'Action',
         purchaseDate: new Date(),
       },
@@ -119,6 +119,7 @@ export class Profile implements OnInit {
           console.log('Register success:', response);
           this.closeEditModal();
           alert(`แก้ไขข้อมูลสำเร็จ`);
+          window.location.reload();
         },
         error: (error) => {
           console.error('Register error:', error);

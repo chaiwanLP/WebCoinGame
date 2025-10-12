@@ -5,12 +5,12 @@ import { HttpClientModule } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { ApiGame } from '../../services/api-game';
 import { User } from '../../models/users.model';
-import { Subscription } from 'rxjs';
-import { Router } from '@angular/router';
+import { Observable, Subscription } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-header',
-  imports: [FormsModule, CommonModule, HttpClientModule],
+  imports: [FormsModule, CommonModule, HttpClientModule, RouterLink ],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -20,10 +20,12 @@ export class Header implements OnInit, OnDestroy {
   showPassword = false;
   showConfirmPassword = false;
   showProfileMenu = false;
-
+  wallet$: Observable<number | null> | undefined;
+  currentUser$: Observable<User | null> | undefined;
+  isLoggedIn$: Observable<boolean> | undefined;
   // User state
   isLoggedIn = false;
-  currentUser: User | null = null;
+  currentUser: User | null = null;  
 
   // Login form
   loginEmail = '';
@@ -46,8 +48,12 @@ export class Header implements OnInit, OnDestroy {
     private apiService: ApiGame,
     private cdr: ChangeDetectorRef,
     private router: Router
-  ) {}
-
+  ) {
+     this.wallet$ = this.apiService.wallet$;
+    this.currentUser$ = this.apiService.currentUser$;
+    this.isLoggedIn$ = this.apiService.isLoggedIn$;
+  }
+  
   ngOnInit(): void {
     // Subscribe to login state
     this.subscriptions.add(
@@ -147,8 +153,10 @@ export class Header implements OnInit, OnDestroy {
     });
   }
 
-  onRegisterSubmit() {
-    // Validate
+  onRegisterSubmit(event: Event) {
+    event.preventDefault(); // ป้องกัน reload หน้า
+
+    // Validation
     if (!this.registerUsername || !this.registerEmail || !this.registerPassword) {
       alert('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
@@ -159,12 +167,12 @@ export class Header implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.registerPassword.length < 4) {
+    if (this.registerPassword.length < 6) {
       alert('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
       return;
     }
 
-    // เรียก API Service
+    // เรียก API
     this.apiService
       .register({
         username: this.registerUsername,
@@ -174,24 +182,18 @@ export class Header implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (response) => {
-          console.log('Register success:', response);
           this.closeRegister();
-
-          // Redirect ตาม role
+          alert(`สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ ${response.user.username}`);
+          // redirect ตาม role
           if (response.user.role === 'admin') {
             this.router.navigate(['/admin']);
           } else {
             this.router.navigate(['/']);
           }
-
-          alert(`สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ ${response.user.username}`);
         },
         error: (error) => {
-          console.error('Register error:', error);
-
-          const errorMessage =
-            error.error?.message || error.message || 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่';
-          alert(errorMessage);
+          const msg = error.error?.message || 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่';
+          alert(msg);
         },
       });
   }
@@ -264,11 +266,22 @@ export class Header implements OnInit, OnDestroy {
   }
 
   logout() {
-  if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-    this.apiService.logout();
-    this.showProfileMenu = false;
-    this.router.navigate(['/']); 
-    alert('ออกจากระบบสำเร็จ');
+    if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+      this.apiService.logout();
+      this.showProfileMenu = false;
+      this.router.navigate(['/']);
+      alert('ออกจากระบบสำเร็จ');
+    }
   }
-}
+
+  checkLoginBeforeTopUp(event: Event) {
+    if (!this.isLoggedIn) {
+      event.preventDefault(); // ป้องกันลิงก์ทำงาน
+      alert('คุณต้องเข้าสู่ระบบก่อนทำรายการเติมเงิน');
+      this.openLogin(); // เปิด modal login ให้เลย
+    } else {
+      // ถ้า login แล้ว ไปหน้าเติมเงินจริง ๆ
+      this.router.navigate(['/top-up']); // หรือใช้ href ปกติ
+    }
+  }
 }
