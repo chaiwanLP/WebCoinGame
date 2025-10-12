@@ -115,13 +115,13 @@ export class Profile implements OnInit {
         profileImage: this.editProfileImage || undefined,
       })
       .subscribe({
-        next: (response) => {
+        next: (response: any) => {
           console.log('Register success:', response);
           this.closeEditModal();
           alert(`แก้ไขข้อมูลสำเร็จ`);
           window.location.reload();
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Register error:', error);
 
           const errorMessage =

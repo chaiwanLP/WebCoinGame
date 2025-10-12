@@ -1,0 +1,43 @@
+/* cart.css หรือ styles.css */
+.input-style {
+  background-color: #1e1e2f;
+  border: 1px solid #4a5568; /* border-gray-600 */
+  border-radius: 0.5rem; /* rounded-lg */
+  padding: 0.75rem 1rem;
+  color: white;
+}
+.input-style:focus {
+  outline: none;
+  border-color: #9f7aea; /* border-purple-500 */
+}
+.btn-primary {
+  padding: 0.75rem 1rem;
+  background-color: #38a169; /* bg-green-600 */
+  color: white;
+  border-radius: 0.5rem; /* rounded-lg */
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+.btn-primary:hover {
+  background-color: #2f855a; /* hover:bg-green-700 */
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.btn-secondary {
+  display: block;
+  padding: 0.75rem 1rem;
+  background-color: #4a5568; /* bg-gray-600 */
+  color: white;
+  border-radius: 0.5rem; /* rounded-lg */
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+.btn-secondary:hover {
+  background-color: #2d3748; /* hover:bg-gray-700 */
+}
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
