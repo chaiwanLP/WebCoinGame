@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiGame } from '../../services/api-game';
 import { Observable } from 'rxjs';
@@ -12,18 +12,23 @@ import { Observable } from 'rxjs';
   standalone: true,
 })
 export class Topup {
+  // --- State for Top-up Form ---
   wallet$: Observable<number | null>;
-
   quickAmounts = [100, 200, 500, 1000, 2000, 5000];
   selectedAmount: number | null = null;
   customAmount: number | null = null;
+
+  // ✅ --- State for Top-up History Modal ---
+  showHistoryModal = false;
+  history: any[] = [];
+  isLoadingHistory = false;
+  historyError: string | null = null;
 
   constructor(private apiGame: ApiGame) {
     this.wallet$ = this.apiGame.wallet$;
   }
 
   get total(): number {
-    // ให้ความสำคัญกับ customAmount ก่อน ถ้ามีค่าและมากกว่า 0
     return this.customAmount && this.customAmount > 0
       ? this.customAmount
       : this.selectedAmount || 0;
@@ -31,12 +36,12 @@ export class Topup {
 
   selectAmount(amount: number): void {
     this.selectedAmount = amount;
-    this.customAmount = null; // เคลียร์ค่าในช่อง custom เมื่อกดปุ่ม
+    this.customAmount = null;
   }
 
   updateCustomAmount(): void {
     if (this.customAmount && this.customAmount > 0) {
-      this.selectedAmount = null; // เคลียร์ปุ่มที่เลือกไว้เมื่อพิมพ์เอง
+      this.selectedAmount = null;
     }
   }
 
@@ -50,15 +55,53 @@ export class Topup {
       alert('กรุณาเลือกหรือระบุจำนวนเงินที่ต้องการเติม');
       return;
     }
+    // (ส่วนนี้จะเชื่อมต่อ API จริงในภายหลัง)
+    alert(`กำลังจะเติมเงิน ${this.total} บาท (ยังไม่เชื่อมต่อ API)`);
+  }
 
-    this.apiGame.topUp(this.total).subscribe({
-      next: () => {
-        alert(`เติมเงินจำนวน ${this.total} บาท สำเร็จ!`);
-        this.clearSelection();
-      },
-      error: (err) => {
-        alert('เกิดข้อผิดพลาดในการเติมเงิน กรุณาลองใหม่อีกครั้ง');
-      },
-    });
+
+  /**
+   * ถูกเรียกเมื่อกดปุ่ม "ประวัติการเติม"
+   */
+  openHistoryModal(): void {
+    this.showHistoryModal = true;
+    this.loadHistory(); // เริ่มโหลดข้อมูลเมื่อเปิด Modal
+  }
+
+  /**
+   * ถูกเรียกเมื่อกดปิด Modal
+   */
+  closeHistoryModal(): void {
+    this.showHistoryModal = false;
+  }
+
+  /**
+   * โหลดข้อมูลประวัติ (ยังไม่เชื่อม API)
+   */
+  loadHistory(): void {
+    this.isLoadingHistory = true;
+    this.historyError = null;
+    this.history = []; // เคลียร์ข้อมูลเก่า
+
+    // จำลองการหน่วงเวลาของ API
+    setTimeout(() => {
+      // --- ลองสลับ Comment เพื่อทดสอบสถานะต่างๆ ---
+
+      // **กรณีสำเร็จ (Success)**
+      this.history = [
+        { transaction_date: '2025-10-12T10:00:00Z', amount: 500, status: 'Completed' },
+        { transaction_date: '2025-09-28T15:30:00Z', amount: 200, status: 'Completed' }
+      ];
+      this.isLoadingHistory = false;
+
+      // **กรณีไม่พบข้อมูล (No Data)**
+      // this.history = [];
+      // this.isLoadingHistory = false;
+
+      // **กรณีเกิดข้อผิดพลาด (Error)**
+      // this.historyError = "ไม่สามารถโหลดข้อมูลประวัติได้";
+      // this.isLoadingHistory = false;
+
+    }, 1500); // หน่วงเวลา 1.5 วินาที
   }
 }

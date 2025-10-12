@@ -26,7 +26,7 @@
                   <p class="text-sm text-gray-400">{{ item.name_type || 'Action adventure' }}</p>
                 </div>
                 <p class="text-lg text-white font-bold w-28 text-right">{{ item.price | number }} บาท</p>
-                <button (click)="onRemoveItem(item.gid)" class="px-3 py-2 text-red-500 hover:bg-red-500 hover:text-white rounded-md transition-colors">
+                <button (click)="onRemoveItem(item.gid, item.game_name)" class="px-3 py-2 text-red-500 hover:bg-red-500 hover:text-white rounded-md transition-colors">
                   ลบ
                 </button>
               </div>
@@ -41,16 +41,8 @@
                 <p *ngIf="wallet$ | async as balance; else loadingWallet" class="text-2xl font-bold text-green-400">{{ balance | number }} บาท</p>
                 <ng-template #loadingWallet><p class="text-2xl font-bold text-gray-500">...</p></ng-template>
               </div>
-              <div>
-                <label class="text-sm text-gray-400">โค้ดส่วนลด</label>
-                <div class="flex gap-2 mt-1">
-                  <input type="text" placeholder="กรอกโค้ด" class="flex-1 input-style" disabled>
-                  <button class="btn-secondary" disabled>ใช้โค้ด</button>
-                </div>
-              </div>
               <div class="space-y-2 pt-2 border-t border-gray-700">
                 <div class="flex justify-between text-gray-400"><span>ราคาเต็ม:</span><span>{{ cartTotal$ | async | number }} บาท</span></div>
-                <div class="flex justify-between text-gray-400"><span>ส่วนลด:</span><span>0 บาท</span></div>
                 <div class="flex justify-between text-white text-xl font-bold"><span>ยอดรวมทั้งหมด:</span><span>{{ cartTotal$ | async | number }} บาท</span></div>
               </div>
               <button (click)="onCheckout()" [disabled]="isCheckingOut" class="btn-primary w-full mt-2">
@@ -59,6 +51,9 @@
               <a routerLink="/" class="btn-secondary w-full text-center mt-2">
                 เลือกซื้อเพิ่มเติม
               </a>
+              <button (click)="openHistoryModal()" class="btn-secondary w-full text-center mt-2 bg-purple-800/50 hover:bg-purple-700/60">
+                <i class="fas fa-history mr-2"></i> ดูประวัติการซื้อ
+              </button>
             </div>
           </div>
 
@@ -67,3 +62,45 @@
     </ng-container>
   </div>
 </main>
+
+<div *ngIf="showHistoryModal" (click)="closeHistoryModal()"
+    class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4 transition-opacity duration-300">
+    
+    <div (click)="$event.stopPropagation()" 
+         class="bg-gray-800 rounded-2xl w-full max-w-2xl shadow-lg border border-gray-700 max-h-[80vh] flex flex-col">
+        
+        <div class="flex justify-between items-center p-4 border-b border-gray-700">
+            <h2 class="text-xl font-semibold text-white">ประวัติการซื้อเกม</h2>
+            <button (click)="closeHistoryModal()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto">
+            <div *ngIf="isLoadingHistory" class="text-center py-10">
+                <p class="text-gray-400">กำลังโหลดประวัติ...</p>
+            </div>
+
+            <div *ngIf="historyError" class="text-center py-10 text-red-400">
+                <p>{{ historyError }}</p>
+            </div>
+            
+            <div *ngIf="!isLoadingHistory && !historyError">
+                <div *ngIf="history.length === 0" class="text-center py-10 text-gray-500">
+                    <p>ยังไม่มีประวัติการซื้อเกม</p>
+                </div>
+
+                <div *ngIf="history.length > 0" class="space-y-4">
+                    <div *ngFor="let item of history" class="flex items-center gap-4 p-4 bg-[#1e1e2f] rounded-lg">
+                        <img [src]="item.game_img" [alt]="item.game_name" class="w-28 h-16 object-cover rounded-md">
+                        <div class="flex-1">
+                            <p class="text-lg font-semibold text-white">{{ item.game_name }}</p>
+                            <p class="text-sm text-gray-400">{{ item.purchase_date | date:'dd/MM/yyyy HH:mm' }}</p>
+                        </div>
+                        <p class="text-lg text-purple-400 font-bold w-28 text-right">{{ item.price | number }} บาท</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
