@@ -64,6 +64,24 @@ export class ApiGame {
       })
     );
   }
+  getWallet() {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
+    }
+    const uid = currentUser?.id;
+    return this.http
+      .get<{ wallet: number }>(`${this.constants.API_ENDPOINT}/getWallet?uid=${uid}`)
+      .pipe(
+        tap((response) => {
+          console.log('💰 Wallet:', response.wallet);
+        }),
+        catchError((error) => {
+          console.error('❌ Get wallet failed:', error);
+          return throwError(() => error);
+        })
+      );
+  }
 
   /**
    * Register
@@ -86,6 +104,7 @@ export class ApiGame {
     return this.http.post<Users>(`${this.constants.API_ENDPOINT}/register`, formData).pipe(
       tap((response: Users) => {
         console.log('✅ Register response:', response);
+        alert('สมัครสมาชิกสำเร็จ!');
         if (response.user) {
           localStorage.setItem('Auth', JSON.stringify(response.user));
           this.isLoggedInSubject.next(true);
@@ -207,14 +226,12 @@ export class ApiGame {
   }
 
   getGameTypesAdmin(): Observable<any[]> {
-    return this.http
-      .get<any[]>(`${this.constants.API_ENDPOINT}/getGameType` )
-      .pipe(
-        catchError((error) => {
-          console.error('❌ Get game types failed:', error);
-          return throwError(() => error);
-        })
-      );
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getGameType`).pipe(
+      catchError((error) => {
+        console.error('❌ Get game types failed:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
@@ -281,25 +298,25 @@ export class ApiGame {
         })
       );
   }
-    /**
+  /**
    *   (Admin) เพิ่มประเภทเกมใหม่
    */
   addGameType(typeName: string): Observable<any> {
     const body = { name_type: typeName };
     return this.http.post<any>(
-      `${this.constants.API_ENDPOINT}/addGameType`, 
-      body, 
+      `${this.constants.API_ENDPOINT}/addGameType`,
+      body,
       this.getAuthHeaders()
     );
   }
 
- /**
+  /**
    *  (Admin) เพิ่มเกมใหม่เข้าสู่ระบบ
    */
   addGame(gameData: any): Observable<any> {
     return this.http.post<any>(
-      `${this.constants.API_ENDPOINT}/addGame`, 
-      gameData, 
+      `${this.constants.API_ENDPOINT}/addGame`,
+      gameData,
       this.getAuthHeaders()
     );
   }

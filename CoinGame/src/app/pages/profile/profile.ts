@@ -25,6 +25,7 @@ export class Profile implements OnInit {
   ownedGames: OwnedGame[] = [];
   currentPage = 1;
   gamesPerPage = 8;
+  wallet = 0;
 
   // Edit Modal
   showEditModal = false;
@@ -32,16 +33,34 @@ export class Profile implements OnInit {
   editEmail = '';
   editProfileImage: File | null = null;
   editProfileImagePreview: string | null = null;
+  isLoading: boolean = false;
 
   constructor(private apiService: ApiGame, private router: Router) {}
 
   ngOnInit(): void {
+    this.isLoading = true; // เริ่ม loading
+
     this.currentUser = this.apiService.getCurrentUser();
 
     if (!this.currentUser) {
       this.router.navigate(['/']);
       return;
     }
+
+    this.apiService.getWallet().subscribe({
+      next: (res) => {
+        console.log('💰 ยอดเงิน:', res.wallet);
+        this.currentUser!.wallet = res.wallet;
+        this.wallet = res.wallet;
+      },
+      error: (err) => {
+        console.error('❌ โหลด wallet ผิดพลาด:', err);
+        // อาจจะโชว์ error message ที่นี่
+      },
+      complete: () => {
+        this.isLoading = false; // โหลดเสร็จ ปิด loading
+      },
+    });
 
     this.loadOwnedGames();
   }
@@ -116,13 +135,13 @@ export class Profile implements OnInit {
       })
       .subscribe({
         next: (response) => {
-          console.log('Register success:', response);
+          console.log('Edit success:', response);
           this.closeEditModal();
           alert(`แก้ไขข้อมูลสำเร็จ`);
           window.location.reload();
         },
         error: (error) => {
-          console.error('Register error:', error);
+          console.error('Edit error:', error);
 
           const errorMessage =
             error.error?.message || error.message || 'แก้ไขไม่สำเร็จ กรุณาลองใหม่';
