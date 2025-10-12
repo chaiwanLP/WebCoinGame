@@ -22,17 +22,17 @@ export const routes: Routes = [
     canActivate: [authGuard], 
   },
   {
-    path: 'game/:id',
-    loadComponent: () => import('./pages/gamedetail/gamedetail').then((m) => m.GameDetail),
-    canActivate: [authGuard], 
-  },
-  {
     path: 'topup',
     loadComponent: () => import('./pages/topup/topup').then((m) => m.Topup),
     canActivate: [authGuard], 
   },
   {
-    path: '**',
+    path: 'cart',
+    loadComponent: () => import('./pages/cart/cart').then((m) => m.Cart),
+    canActivate: [authGuard], 
+  },
+  {
+    path: '**', 
     loadComponent: () => import('./pages/pagenotfound/pagenotfound').then(m => m.PageNotFound)
   },
 ];

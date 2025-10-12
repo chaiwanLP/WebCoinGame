@@ -10,7 +10,7 @@ import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-header',
-  imports: [FormsModule, CommonModule, HttpClientModule, RouterLink],
+  imports: [FormsModule, CommonModule, HttpClientModule],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })

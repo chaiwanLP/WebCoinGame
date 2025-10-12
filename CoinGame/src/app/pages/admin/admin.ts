@@ -4,18 +4,9 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiGame } from '../../services/api-game';
 import { User } from '../../models/users.model';
-import { forkJoin } from 'rxjs'; // 👈 **Import forkJoin**
+import { forkJoin } from 'rxjs';  
 
-// Interface สำหรับ Game (Type Safety)
-export interface Game {
-  gid: string;
-  game_name: string;
-  price: number;
-  description: string;
-  tid: string;
-  game_img: string;
-  type_name?: string;
-}
+import { Game } from '../../services/api-game';
 
 @Component({
   selector: 'app-admin',
@@ -108,7 +99,7 @@ export class Admin implements OnInit {
   // --- Game Management (CRUD) ---
   openAddGameModal(): void {
     this.isEditing = false;
-    this.currentGame = { game_name: '', price: 0, tid: '', description: '', game_img: '' };
+    this.currentGame = { game_name: '', price: 0, description: '', game_img: '' };
     this.showGameModal = true;
   }
 

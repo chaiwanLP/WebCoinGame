@@ -68,7 +68,7 @@
               <tr *ngFor="let game of allGames" class="border-b border-gray-800 hover:bg-[#333355]">
                 <td class="p-4"><img [src]="game.game_img" [alt]="game.game_name" class="w-16 h-10 object-cover rounded-md"></td>
                 <td class="px-6 py-4 text-white font-semibold">{{ game.game_name }}</td>
-                <td class="px-6 py-4">{{ game.type_name }}</td>
+                <td class="px-6 py-4">{{ game.name_type }}</td>
                 <td class="px-6 py-4">{{ game.price | number }} บาท</td>
                 <td class="px-6 py-4"><div class="flex gap-3"><button (click)="openEditGameModal(game)" class="action-btn-edit">แก้ไข</button><button (click)="onDeleteGame(game.gid, game.game_name)" class="action-btn-delete">ลบ</button></div></td>
               </tr>
