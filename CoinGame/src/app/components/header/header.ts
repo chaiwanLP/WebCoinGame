@@ -5,12 +5,12 @@ import { HttpClientModule } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { ApiGame } from '../../services/api-game';
 import { User } from '../../models/users.model';
-import { Subscription } from 'rxjs';
-import { Router } from '@angular/router';
+import { Observable, Subscription } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-header',
-  imports: [FormsModule, CommonModule, HttpClientModule],
+  imports: [FormsModule, CommonModule, HttpClientModule, RouterLink ],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -20,10 +20,12 @@ export class Header implements OnInit, OnDestroy {
   showPassword = false;
   showConfirmPassword = false;
   showProfileMenu = false;
-
+  wallet$: Observable<number | null> | undefined;
+  currentUser$: Observable<User | null> | undefined;
+  isLoggedIn$: Observable<boolean> | undefined;
   // User state
   isLoggedIn = false;
-  currentUser: User | null = null;
+  currentUser: User | null = null;  
 
   // Login form
   loginEmail = '';
@@ -46,8 +48,12 @@ export class Header implements OnInit, OnDestroy {
     private apiService: ApiGame,
     private cdr: ChangeDetectorRef,
     private router: Router
-  ) {}
-
+  ) {
+     this.wallet$ = this.apiService.wallet$;
+    this.currentUser$ = this.apiService.currentUser$;
+    this.isLoggedIn$ = this.apiService.isLoggedIn$;
+  }
+  
   ngOnInit(): void {
     // Subscribe to login state
     this.subscriptions.add(

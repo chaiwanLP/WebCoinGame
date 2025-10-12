@@ -1,8 +1,8 @@
-// topup.component.ts
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core'; // 1. Import OnInit
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ApiGame } from '../../services/api-game'; // 2. Import ApiGame service
+import { ApiGame } from '../../services/api-game';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-topup',
@@ -11,80 +11,54 @@ import { ApiGame } from '../../services/api-game'; // 2. Import ApiGame service
   imports: [FormsModule, CommonModule],
   standalone: true,
 })
-export class Topup implements OnInit {
-  balance: number = 0;
+export class Topup {
+  wallet$: Observable<number | null>;
 
   quickAmounts = [100, 200, 500, 1000, 2000, 5000];
   selectedAmount: number | null = null;
   customAmount: number | null = null;
-  isLoading: boolean = true;
 
-  constructor(private apiGame: ApiGame) {}
-
-  // 5. ngOnInit จะทำงานตอน Component เริ่มโหลด
-  ngOnInit(): void {
-    this.fetchBalance();
+  constructor(private apiGame: ApiGame) {
+    this.wallet$ = this.apiGame.wallet$;
   }
 
-  fetchBalance(): void {
-    this.isLoading = true;
-    this.apiGame.getBalance().subscribe({
-      next: (response) => {
-        this.balance = response.balance;
-        this.isLoading = false;
-        console.log('✅ Balance updated:', this.balance);
-      },
-      error: (err) => {
-        console.error('❌ Failed to get balance', err);
-        this.balance = 0;
-        this.isLoading = false;
-      },
-    });
+  get total(): number {
+    // ให้ความสำคัญกับ customAmount ก่อน ถ้ามีค่าและมากกว่า 0
+    return this.customAmount && this.customAmount > 0
+      ? this.customAmount
+      : this.selectedAmount || 0;
   }
 
-  get total() {
-    return (this.selectedAmount || 0);
-  }
-
-  selectAmount(amount: number) {
+  selectAmount(amount: number): void {
     this.selectedAmount = amount;
-     
+    this.customAmount = null; // เคลียร์ค่าในช่อง custom เมื่อกดปุ่ม
   }
 
-  updateCustomAmount() {
-    if (this.customAmount) {
-      this.selectAmount(this.customAmount);
+  updateCustomAmount(): void {
+    if (this.customAmount && this.customAmount > 0) {
+      this.selectedAmount = null; // เคลียร์ปุ่มที่เลือกไว้เมื่อพิมพ์เอง
     }
   }
 
-  // ฟังก์ชัน topUp ควรเรียก API สำหรับการเติมเงินจริง
-  // และเมื่อสำเร็จให้เรียก fetchBalance() อีกครั้งเพื่ออัปเดตยอดเงินล่าสุด
-  topUp() {
-    if (!this.selectedAmount) return;
-
-    // *** ส่วนนี้คือตัวอย่างการเรียก API เติมเงิน (คุณต้องสร้างฟังก์ชันนี้ใน ApiGame service) ***
-    // this.apiGame.topUp(this.total).subscribe({
-    //   next: (response) => {
-    //     alert(`เติมเงินสำเร็จ!`);
-    //     this.fetchBalance(); // <-- ดึงยอดเงินใหม่หลังเติมสำเร็จ
-    //     this.selectedAmount = null;
-    //     this.customAmount = null;
-    //     this.bonus = 0;
-    //   },
-    //   error: (err) => {
-    //     alert('เกิดข้อผิดพลาดในการเติมเงิน');
-    //     console.error(err);
-    //   }
-    // });
-
-    // โค้ดชั่วคราวสำหรับทดสอบ (กรุณาลบออกเมื่อเชื่อม API จริง)
-    alert(`เติมเงิน ${this.selectedAmount} บาท สำเร็จ! (ทดสอบ)`);
-    this.balance += this.total;
-    this.selectedAmount = null;
-    this.customAmount = null;
-  }
   clearSelection(): void {
     this.selectedAmount = null;
     this.customAmount = null;
+  }
+
+  topUp(): void {
+    if (!this.total || this.total <= 0) {
+      alert('กรุณาเลือกหรือระบุจำนวนเงินที่ต้องการเติม');
+      return;
+    }
+
+    this.apiGame.topUp(this.total).subscribe({
+      next: () => {
+        alert(`เติมเงินจำนวน ${this.total} บาท สำเร็จ!`);
+        this.clearSelection();
+      },
+      error: (err) => {
+        alert('เกิดข้อผิดพลาดในการเติมเงิน กรุณาลองใหม่อีกครั้ง');
+      },
+    });
   }
 }
