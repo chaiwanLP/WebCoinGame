@@ -15,21 +15,14 @@ import { Observable } from 'rxjs';
   styleUrls: ['./cart.css'],
 })
 export class Cart {
-  cartItems$!: Observable<Game[]>;
-  cartTotal$!: Observable<number>;
-  wallet$!: Observable<number | null>;
-  isCheckingOut: boolean = false;
-  isLoading: boolean = false;
-  showHistoryModal = false;
-  history: any[] = [];
-  isLoadingHistory = false;
-  historyError: string | null = null;
-
-  /**
-   * ถูกเรียกเมื่อกดปุ่ม "ดูประวัติการซื้อ"
-   */
+  // 👈 4. ชื่อ Class ควรเป็น PascalCase (CartComponent)
+  // --- Observables for the Template ---
+  cartItems$: Observable<Game[]>;
+  cartTotal$: Observable<number>;
+  wallet$: Observable<number | null>;
 
   // --- UI State ---
+  isCheckingOut = false;
 
   constructor(private apiService: ApiGame) {
     // ดึงข้อมูลจาก Service มาใช้ในหน้า HTML ด้วย async pipe (ส่วนนี้ถูกต้องแล้ว)
