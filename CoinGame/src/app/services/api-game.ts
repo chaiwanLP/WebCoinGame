@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, BehaviorSubject, throwError, of } from 'rxjs';
+import { tap, catchError, switchMap, map } from 'rxjs/operators';
 import { Constants } from '../config/constants';
 import { User, Users } from '../models/users.model';
 
 // ✅ 1. ย้าย Interface ของ Game มาไว้ที่นี่เพื่อความเป็นระเบียบ
 export interface Game {
+  cid: string;
   gid: string;
   game_name: string;
   price: number;
@@ -39,7 +40,6 @@ export class ApiGame {
   public cartCount$ = this.cartItems$.pipe(map((items) => items.length));
 
   constructor(private constants: Constants, private http: HttpClient) {
-    // เช็คว่ามี user ใน localStorage หรือไม่
     this.checkAuth();
 
     this.isLoggedIn$.subscribe((isLoggedIn) => {
@@ -54,7 +54,10 @@ export class ApiGame {
     });
   }
 
-  // เช็คว่า login อยู่หรือไม่
+  // ========================================
+  //  Authentication & User Methods
+  // ========================================
+
   private checkAuth(): void {
     const userJson = localStorage.getItem('Auth');
     if (userJson) {
@@ -67,12 +70,22 @@ export class ApiGame {
       }
     }
   }
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  public loading$ = this.loadingSubject.asObservable();
+  fetchCartItems(): Observable<Game[]> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
+    }
+    const uid = currentUser?.id;
+    return this.http
+      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart?uid=${uid}`)
+      .pipe(tap((items) => this.cartItemsSubject.next(items)));
+  }
 
   login(email: string, password: string): Observable<Users> {
     return this.http.post<Users>(`${this.constants.API_ENDPOINT}/login`, { email, password }).pipe(
       tap((response: Users) => {
-        console.log('Login response:', response);
-
         if (response.user) {
           localStorage.setItem('Auth', JSON.stringify(response.user));
           this.isLoggedInSubject.next(true);
@@ -121,40 +134,6 @@ export class ApiGame {
     this.isLoggedInSubject.next(false);
     this.currentUserSubject.next(null);
   }
-  // getWallet() {
-  //   const currentUser = this.getCurrentUser();
-  //   if (!currentUser?.id) {
-  //     return throwError(() => new Error('User not authenticated for top-up'));
-  //   }
-  //   const uid = currentUser?.id;
-  //   return this.http
-  //     .get<{ wallet: number }>(`${this.constants.API_ENDPOINT}/getWallet?uid=${uid}`)
-  //     .pipe(
-  //       tap((response) => {
-  //         console.log('💰 Wallet:', response.wallet);
-  //       }),
-  //       catchError((error) => {
-  //         console.error('❌ Get wallet failed:', error);
-  //         return throwError(() => error);
-  //       })
-  //     );
-  // }
-  getHistoryTopup() {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser?.id) {
-      return throwError(() => new Error('User not authenticated for top-up'));
-    }
-    const uid = currentUser.id;
-    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/get-history-topup?uid=${uid}`).pipe(
-      tap((response) => {
-        console.log('history top up:', response);
-      }),
-      catchError((error) => {
-        console.error('❌ Get history failed:', error);
-        return throwError(() => error);
-      })
-    );
-  }
 
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
@@ -177,7 +156,6 @@ export class ApiGame {
     profileImage?: File;
   }): Observable<Users> {
     const formData = new FormData();
-    console.log(userData.uid);
 
     if (userData.username) {
       formData.append('username', userData.username);
@@ -193,60 +171,242 @@ export class ApiGame {
     if (currentUser?.id) {
       formData.append('uid', currentUser.id);
     }
-    console.log('this uid', currentUser?.id);
-    for (const pair of formData.entries()) {
-      console.log(pair[0] + ':', pair[1]);
-    }
 
-    console.log(`${this.constants.API_ENDPOINT}/editUser`);
     return this.http.post<Users>(`${this.constants.API_ENDPOINT}/editUser`, formData).pipe(
       tap((response: Users) => {
-        console.log('Update profile response:', response);
-
+        console.log('✅ Update profile response:', response);
         if (response.user) {
           localStorage.setItem('Auth', JSON.stringify(response.user));
           this.currentUserSubject.next(response.user);
         }
+      }),
+      catchError((error) => {
+        console.error('❌ Update profile failed:', error);
+        return throwError(() => error);
       })
     );
   }
-  /**
-   * Logout
-   */
-  logout(): void {
-    localStorage.removeItem('Auth');
-    this.isLoggedInSubject.next(false);
-    this.currentUserSubject.next(null);
+  register(userData: {
+    username: string;
+    email: string;
+    password: string;
+    profileImage?: File;
+  }): Observable<Users> {
+    const formData = new FormData();
+    formData.append('username', userData.username);
+    formData.append('email', userData.email);
+    formData.append('password', userData.password);
+
+    if (userData.profileImage) {
+      formData.append('profile_img', userData.profileImage);
+    }
+
+    return this.http.post<Users>(`${this.constants.API_ENDPOINT}/register`, formData).pipe(
+      tap((response: Users) => {
+        console.log('✅ Register response:', response);
+        if (response.user) {
+          localStorage.setItem('Auth', JSON.stringify(response.user));
+          this.isLoggedInSubject.next(true);
+          this.currentUserSubject.next(response.user);
+        }
+      }),
+      catchError((error) => {
+        console.error('❌ Register failed:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
-  /**
-   * Get current user
-   */
-  getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+  // ========================================
+  //  Wallet & Top-Up Methods
+  // ========================================
+
+  public refreshWallet(): Observable<any> {
+    const userId = this.getCurrentUser()?.id;
+    if (!userId) return of(null);
+    return this.http
+      .get<{ wallet: number }>(
+        `${this.constants.API_ENDPOINT}/getWallet?uid=${userId}`,
+        this.getAuthHeaders()
+      )
+      .pipe(tap((response) => this.walletSubject.next(response.wallet)));
   }
 
-  /**
-   * Check if logged in
-   */
-  isAuthenticated(): boolean {
-    return this.isLoggedInSubject.value;
+  topUp(amount: number): Observable<any> {
+    const userId = this.getCurrentUser()?.id;
+    if (!userId) return throwError(() => new Error('User not authenticated'));
+    return this.http
+      .post<any>(
+        `${this.constants.API_ENDPOINT}/top-up`,
+        { uid: userId, amount },
+        this.getAuthHeaders()
+      )
+      .pipe(switchMap(() => this.refreshWallet()));
   }
 
-  /**
-   * Get All Games
-   */
-  getAllGames(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getAllGame`);
+  // ========================================
+  //  Cart Methods (ตะกร้าสินค้า)
+  // ========================================
+
+  getCart(): void {
+    const userId = this.getCurrentUser()?.id;
+    if (!userId) return;
+
+    this.http
+      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart`, {
+        ...this.getAuthHeaders(),
+        params: { uid: userId },
+      })
+      .subscribe({
+        next: (items) => this.cartItemsSubject.next(items || []),
+        error: (err) => this.cartItemsSubject.next([]),
+      });
   }
 
-  /**
-   * Get Game Types
-   */
-  getGameTypes(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getGameType`);
+  addToCart(gid: string): Observable<any> {
+    const userId = this.getCurrentUser()?.id;
+    if (!userId) return throwError(() => new Error('User not logged in'));
+
+    return this.http
+      .post<any>(
+        `${this.constants.API_ENDPOINT}/add-cart`,
+        { uid: userId, gid },
+        this.getAuthHeaders()
+      )
+      .pipe(
+        tap((response) => {
+          // alert(response.message);
+          this.getCart();
+        })
+      );
   }
+
+  removeFromCart(cid: string): Observable<any> {
+    return this.http.get<any>(`${this.constants.API_ENDPOINT}/delete-cart?cid=${cid}`).pipe(
+      tap((res) => {
+        const deletedGid = res.gid;
+        if (!deletedGid) {
+          console.warn('ไม่พบ GID ที่ถูกลบใน response');
+          return;
+        }
+
+        const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== deletedGid);
+        this.cartItemsSubject.next(updatedItems);
+      }),
+      catchError((error) => {
+        console.error('ลบเกมออกจากตะกร้าล้มเหลว:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+  checkOwnGame(gid: string): Observable<any> {
+    const uid = this.getCurrentUser()?.id;
+    if (!uid) return throwError(() => new Error('User not logged in'));
+
+    return this.http
+      .get<any>(`${this.constants.API_ENDPOINT}/checkOwnGame?uid=${uid}&gid=${gid}`)
+      .pipe(
+        tap((res) => {
+          console.log('Check own game response:', res.message);
+        }),
+        catchError((error) => {
+          console.error('ตรวจสอบเกมล้มเหลว:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  checkout(): Observable<any> {
+    const currentUser = this.getCurrentUser();
+    const userId = currentUser?.id || (currentUser as any)?.uid;
+    const items = this.cartItemsSubject.value;
+    if (!userId || items.length === 0) {
+      return throwError(() => new Error('ไม่มีสินค้าในตะกร้า หรือยังไม่ได้เข้าสู่ระบบ'));
+    }
+
+    const total = items.reduce((sum, item) => sum + item.price, 0);
+    if (this.walletSubject.value !== null && this.walletSubject.value < total) {
+      return throwError(() => new Error('ยอดเงินในกระเป๋าไม่เพียงพอ'));
+    }
+
+    const orderData = { uid: userId, cid: items.map((item) => item.cid), total: total };
+    console.log('data post', orderData);
+
+    return this.http
+      .post(`${this.constants.API_ENDPOINT}/buy-game`, orderData, this.getAuthHeaders())
+      .pipe(
+        tap(() => {
+          this.getCart();
+          this.refreshWallet();
+        })
+      );
+  }
+
+  // ========================================
+  //  General Game & Type Methods
+  // ========================================
   getGameById(gid: string): Observable<any> {
-    return this.http.get<any>(`${this.constants.API_ENDPOINT}/getGameById?gid=${gid}`);
+    return this.http
+      .get<any>(`${this.constants.API_ENDPOINT}/getGameById?gid=${gid}`, this.getAuthHeaders())
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Get game by id failed:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  getAllGames(): Observable<Game[]> {
+    return this.http.get<Game[]>(
+      `${this.constants.API_ENDPOINT}/getAllGame`,
+      this.getAuthHeaders()
+    );
+  }
+
+  getGameTypes(): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.constants.API_ENDPOINT}/getGameType`,
+      this.getAuthHeaders()
+    );
+  }
+
+  // ========================================
+  //  Admin Methods
+  // ========================================
+
+  addGame(formData: FormData): Observable<any> {
+    return this.http.post(`${this.constants.API_ENDPOINT}/addGame`, formData);
+  }
+
+  editGame(formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.constants.API_ENDPOINT}/editGame`, formData);
+  }
+
+  deleteGame(gid: string): Observable<any> {
+    const currentUser = this.getCurrentUser();
+    const userId = currentUser?.id || (currentUser as any)?.uid;
+    const body = { gid, uid: userId };
+    return this.http.post<any>(
+      `${this.constants.API_ENDPOINT}/deleteGame`,
+      body,
+      this.getAuthHeaders()
+    );
+  }
+
+  addGameType(typeName: string): Observable<any> {
+    const body = { name_type: typeName };
+    return this.http.post<any>(
+      `${this.constants.API_ENDPOINT}/addGameType`,
+      body,
+      this.getAuthHeaders()
+    );
+  }
+  getGameTypesAdmin(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getGameType`).pipe(
+      catchError((error) => {
+        console.error('❌ Get game types failed:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }
