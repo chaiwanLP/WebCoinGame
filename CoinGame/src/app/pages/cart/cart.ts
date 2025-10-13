@@ -69,10 +69,6 @@ export class Cart {
       });
     }
   }
-  penHistoryModal(): void {
-    this.showHistoryModal = true;
-    this.loadHistory();
-  }
   openHistoryModal(): void {
     this.showHistoryModal = true;
     this.loadHistory();

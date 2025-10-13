@@ -22,10 +22,11 @@ export class Topup {
   showHistoryModal = false;
   history: any[] = [];
   isLoadingHistory = false;
+  isLoading = false;
   historyError: string | null = null;
 
   constructor(private apiGame: ApiGame) {
-    this.wallet$ = this.apiGame.getWallet().pipe(map((res) => res.wallet));
+    this.wallet$ = this.apiGame.getWallet().pipe(map((res) => res.wallet ?? 0));
   }
 
   get total(): number {
@@ -46,12 +47,13 @@ export class Topup {
     }
   }
 
-  clearSelection(): void {
+  async clearSelection(): Promise<void> {
     this.selectedAmount = null;
     this.customAmount = null;
   }
-  updateWallet(): void {
+  async updateWallet(): Promise<void> {
     this.currentUser = this.apiGame.getCurrentUser();
+    this.wallet$ = this.apiGame.getWallet().pipe(map((res) => res.wallet ?? 0));
     this.apiGame.getWallet().subscribe((res) => {
       console.log('💰 ยอดเงิน:', res.wallet);
       this.currentUser!.wallet = res.wallet;
@@ -59,18 +61,21 @@ export class Topup {
   }
 
   topUp(): void {
+    this.isLoading = true;
     if (!this.total || this.total <= 0) {
       alert('กรุณาเลือกหรือระบุจำนวนเงินที่ต้องการเติม');
       return;
     }
 
     this.apiGame.topUp(this.total).subscribe({
-      next: () => {
+      next: async () => {
         alert(`เติมเงินจำนวน ${this.total} บาท สำเร็จ!`);
-        this.updateWallet();
-        this.clearSelection();
+        await this.updateWallet();
+        await this.clearSelection();
+        this.isLoading = false;
       },
       error: (err) => {
+        this.isLoading = false;
         alert('เกิดข้อผิดพลาดในการเติมเงิน กรุณาลองใหม่อีกครั้ง');
       },
     });
@@ -78,7 +83,18 @@ export class Topup {
   async openHistoryModal(): Promise<void> {
     this.showHistoryModal = true;
     await this.loadHistory();
-    console.log(this.history);
+
+    // ✅ แปลง Timestamp ให้เป็นวันที่อ่านง่าย
+    const readableHistory = this.history.map((item) => {
+      const timestamp = item.top_up_date;
+      const date = new Date(timestamp._seconds * 1000);
+      return {
+        ...item,
+        top_up_date: date.toLocaleString(), // แสดงแบบ "13/10/2025, 11:17:58"
+      };
+    });
+
+    console.log('📜 ประวัติการเติมเงิน:', readableHistory);
   }
 
   /**
@@ -98,8 +114,18 @@ export class Topup {
 
     this.apiGame.getHistoryTopup().subscribe({
       next: (response) => {
-        this.history = response;
+        // 🔁 แปลงวันที่ให้อ่านง่ายตั้งแต่ตรงนี้
+        this.history = response.map((item: any) => {
+          const timestamp = item.top_up_date;
+          const date = new Date(timestamp._seconds * 1000);
+          return {
+            ...item,
+            top_up_date: date.toLocaleString(),
+          };
+        });
+
         this.isLoadingHistory = false;
+        console.log('📜 ประวัติการเติมเงิน:', this.history);
       },
       error: (error) => {
         console.error('Error loading history:', error);

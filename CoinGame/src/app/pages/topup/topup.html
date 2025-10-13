@@ -1,5 +1,8 @@
+<div *ngIf="isLoading" class="fixed inset-0 flex justify-center items-center bg-black bg-opacity-70 z-50">
+  <div class="w-12 h-12 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
+</div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<main class="flex-1 p-6 bg-gray-900 min-h-screen">
+<main *ngIf="!isLoading" class="flex-1 p-6 bg-gray-900 min-h-screen">
     <div class="max-w-5xl mx-auto px-4 py-6">
 
         <div class="text-center mb-10">
@@ -8,13 +11,18 @@
                 <div class="relative z-10">
                     <div class="text-white/70 text-sm mb-2">ยอดเงินปัจจุบัน</div>
 
-                    <div *ngIf="wallet$ | async as currentBalance" class="text-5xl font-bold text-white">
-                        {{ currentBalance | number }}
-                    </div>
+                  <!-- แสดงตัวเลขเฉพาะเมื่อ wallet มีค่า -->
+<div *ngIf="(wallet$ | async) as wallet; else loading" class="text-5xl font-bold text-white">
+  {{ wallet | number }}
+</div>
 
-                    <div *ngIf="(wallet$ | async) === null" class="text-3xl font-bold text-white">
-                        กำลังโหลด...
-                    </div>
+<!-- กำหนด template สำหรับกำลังโหลด -->
+<ng-template #loading>
+  <div class="text-3xl font-bold text-white">
+    กำลังโหลด...
+  </div>
+</ng-template>
+
 
                     <div class="text-white/70 text-sm mt-2">บาท</div>
                 </div>

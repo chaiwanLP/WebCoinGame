@@ -113,6 +113,7 @@ export class ApiGame {
       );
   }
   getHistoryTopup() {
+    console.log('is here');
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
       return throwError(() => new Error('User not authenticated for top-up'));
