@@ -7,7 +7,6 @@ import { User, Users } from '../models/users.model';
 
 // ✅ 1. ย้าย Interface ของ Game มาไว้ที่นี่เพื่อความเป็นระเบียบ
 export interface Game {
-  cid: string;
   gid: string;
   game_name: string;
   price: number;
@@ -70,18 +69,6 @@ export class ApiGame {
       }
     }
   }
-  private loadingSubject = new BehaviorSubject<boolean>(false);
-  public loading$ = this.loadingSubject.asObservable();
-  fetchCartItems(): Observable<Game[]> {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser?.id) {
-      return throwError(() => new Error('User not authenticated for top-up'));
-    }
-    const uid = currentUser?.id;
-    return this.http
-      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart?uid=${uid}`)
-      .pipe(tap((items) => this.cartItemsSubject.next(items)));
-  }
 
   login(email: string, password: string): Observable<Users> {
     return this.http.post<Users>(`${this.constants.API_ENDPOINT}/login`, { email, password }).pipe(
@@ -93,6 +80,12 @@ export class ApiGame {
         }
       })
     );
+  }
+
+  logout(): void {
+    localStorage.removeItem('Auth');
+    this.isLoggedInSubject.next(false);
+    this.currentUserSubject.next(null);
   }
   getWallet() {
     const currentUser = this.getCurrentUser();
@@ -112,27 +105,21 @@ export class ApiGame {
         })
       );
   }
-  getOwnGame() {
+  getHistoryTopup() {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
       return throwError(() => new Error('User not authenticated for top-up'));
     }
-    const uid = currentUser?.id;
-    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/profile?uid=${uid}`).pipe(
+    const uid = currentUser.id;
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/get-history-topup?uid=${uid}`).pipe(
       tap((response) => {
-        console.log('game', response);
+        console.log('history top up:', response);
       }),
       catchError((error) => {
-        console.error('❌ Get wallet failed:', error);
+        console.error('❌ Get history failed:', error);
         return throwError(() => error);
       })
     );
-  }
-
-  logout(): void {
-    localStorage.removeItem('Auth');
-    this.isLoggedInSubject.next(false);
-    this.currentUserSubject.next(null);
   }
 
   getCurrentUser(): User | null {
@@ -253,10 +240,13 @@ export class ApiGame {
     if (!userId) return;
 
     this.http
-      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart`, {
-        ...this.getAuthHeaders(),
-        params: { uid: userId },
-      })
+      .get<Game[]>(
+        `${this.constants.API_ENDPOINT}/cart`,
+        {
+          ...this.getAuthHeaders(),
+          params: { uid: userId }
+        }
+      )
       .subscribe({
         next: (items) => this.cartItemsSubject.next(items || []),
         error: (err) => this.cartItemsSubject.next([]),
@@ -275,43 +265,27 @@ export class ApiGame {
       )
       .pipe(
         tap((response) => {
-          // alert(response.message);
+          alert(response.message);
           this.getCart();
         })
       );
   }
 
-  removeFromCart(cid: string): Observable<any> {
-    return this.http.get<any>(`${this.constants.API_ENDPOINT}/delete-cart?cid=${cid}`).pipe(
-      tap((res) => {
-        const deletedGid = res.gid;
-        if (!deletedGid) {
-          console.warn('ไม่พบ GID ที่ถูกลบใน response');
-          return;
-        }
-
-        const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== deletedGid);
-        this.cartItemsSubject.next(updatedItems);
-      }),
-      catchError((error) => {
-        console.error('ลบเกมออกจากตะกร้าล้มเหลว:', error);
-        return throwError(() => error);
-      })
-    );
-  }
-  checkOwnGame(gid: string): Observable<any> {
-    const uid = this.getCurrentUser()?.id;
-    if (!uid) return throwError(() => new Error('User not logged in'));
+  removeFromCart(gid: string): Observable<any> {
+    const currentUser = this.getCurrentUser();
+    const userId = currentUser?.id || (currentUser as any)?.uid;
+    if (!userId) return throwError(() => new Error('User not logged in'));
 
     return this.http
-      .get<any>(`${this.constants.API_ENDPOINT}/checkOwnGame?uid=${uid}&gid=${gid}`)
+      .post<any>(
+        `${this.constants.API_ENDPOINT}/delete-cart`,
+        { uid: userId, gid },
+        this.getAuthHeaders()
+      )
       .pipe(
-        tap((res) => {
-          console.log('Check own game response:', res.message);
-        }),
-        catchError((error) => {
-          console.error('ตรวจสอบเกมล้มเหลว:', error);
-          return throwError(() => error);
+        tap(() => {
+          const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== gid);
+          this.cartItemsSubject.next(updatedItems);
         })
       );
   }
@@ -329,15 +303,15 @@ export class ApiGame {
       return throwError(() => new Error('ยอดเงินในกระเป๋าไม่เพียงพอ'));
     }
 
-    const orderData = { uid: userId, cid: items.map((item) => item.cid), total: total };
-    console.log('data post', orderData);
+    const orderData = { uid: userId, game_ids: items.map((item) => item.gid), total_price: total };
 
+    // ‼️ คุณต้องสร้าง API Endpoint นี้ที่ Backend
     return this.http
-      .post(`${this.constants.API_ENDPOINT}/buy-game`, orderData, this.getAuthHeaders())
+      .post(`${this.constants.API_ENDPOINT}/createOrder`, orderData, this.getAuthHeaders())
       .pipe(
         tap(() => {
-          this.getCart();
-          this.refreshWallet();
+          this.getCart(); // โหลดตะกร้าใหม่ (ซึ่งควรจะว่างเปล่า)
+          this.refreshWallet(); // อัปเดตยอดเงิน
         })
       );
   }
@@ -374,12 +348,20 @@ export class ApiGame {
   //  Admin Methods
   // ========================================
 
-  addGame(formData: FormData): Observable<any> {
-    return this.http.post(`${this.constants.API_ENDPOINT}/addGame`, formData);
+  addGame(gameData: any): Observable<any> {
+    return this.http.post<any>(
+      `${this.constants.API_ENDPOINT}/addGame`,
+      gameData,
+      this.getAuthHeaders()
+    );
   }
 
-  editGame(formData: FormData): Observable<any> {
-    return this.http.post<any>(`${this.constants.API_ENDPOINT}/editGame`, formData);
+  editGame(gameData: any): Observable<any> {
+    return this.http.post<any>(
+      `${this.constants.API_ENDPOINT}/editGame`,
+      gameData,
+      this.getAuthHeaders()
+    );
   }
 
   deleteGame(gid: string): Observable<any> {

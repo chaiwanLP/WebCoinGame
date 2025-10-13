@@ -6,14 +6,11 @@ import { ApiGame } from '../../services/api-game';
 import { User } from '../../models/users.model';
 
 interface OwnedGame {
-  gid: string;
-  game_name: string;
-  game_img: string;
-  description: string;
-  price: number;
-  release_date: string;
-  type_name: string;
-  tid: string;
+  id: string;
+  title: string;
+  img: string;
+  category: string;
+  purchaseDate: Date;
 }
 
 @Component({
@@ -28,7 +25,6 @@ export class Profile implements OnInit {
   ownedGames: OwnedGame[] = [];
   currentPage = 1;
   gamesPerPage = 8;
-  wallet = 0;
 
   // Edit Modal
   showEditModal = false;
@@ -36,13 +32,10 @@ export class Profile implements OnInit {
   editEmail = '';
   editProfileImage: File | null = null;
   editProfileImagePreview: string | null = null;
-  isLoading: boolean = false;
 
   constructor(private apiService: ApiGame, private router: Router) {}
 
   ngOnInit(): void {
-    this.isLoading = true; // เริ่ม loading
-
     this.currentUser = this.apiService.getCurrentUser();
 
     if (!this.currentUser) {
@@ -50,33 +43,20 @@ export class Profile implements OnInit {
       return;
     }
 
-    this.apiService.getWallet().subscribe({
-      next: (res) => {
-        console.log('💰 ยอดเงิน:', res.wallet);
-        this.currentUser!.wallet = res.wallet;
-        this.wallet = res.wallet;
-      },
-      error: (err) => {
-        console.error('❌ โหลด wallet ผิดพลาด:', err);
-        // อาจจะโชว์ error message ที่นี่
-      },
-      complete: () => {
-        this.isLoading = false; // โหลดเสร็จ ปิด loading
-      },
-    });
-
     this.loadOwnedGames();
   }
 
   loadOwnedGames(): void {
-    this.apiService.getOwnGame().subscribe({
-      next: (response) => {
-        this.ownedGames = response;
+    // TODO: Call API to get owned games
+    this.ownedGames = [
+      {
+        id: '1',
+        title: 'GTA V',
+        img: '',
+        category: 'Action',
+        purchaseDate: new Date(),
       },
-      error: (error) => {
-        console.error('Error loading games:', error);
-      },
-    });
+    ];
   }
 
   get totalPages(): number {
@@ -135,25 +115,27 @@ export class Profile implements OnInit {
         profileImage: this.editProfileImage || undefined,
       })
       .subscribe({
-        next: (response) => {
-          console.log('Edit success:', response);
+        next: (response: any) => {
+          console.log('Register success:', response);
           this.closeEditModal();
           alert(`แก้ไขข้อมูลสำเร็จ`);
           window.location.reload();
-          localStorage.setItem('Auth', JSON.stringify(updatedUser));
-
-          // อัปเดต currentUser
-          this.currentUser = updatedUser;
         },
-        error: (error) => {
-          console.error('Edit error:', error);
+        error: (error: any) => {
+          console.error('Register error:', error);
 
           const errorMessage =
             error.error?.message || error.message || 'แก้ไขไม่สำเร็จ กรุณาลองใหม่';
           alert(errorMessage);
         },
       });
+
+    localStorage.setItem('Auth', JSON.stringify(updatedUser));
+
+    // อัปเดต currentUser
+    this.currentUser = updatedUser;
   }
+  hello(): void {}
 
   logout(): void {
     if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {

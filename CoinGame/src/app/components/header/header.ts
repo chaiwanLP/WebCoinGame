@@ -25,7 +25,7 @@ export class Header implements OnInit, OnDestroy {
   isLoggedIn$: Observable<boolean> | undefined;
   // User state
   isLoggedIn = false;
-  currentUser: User | null = null;
+  currentUser: User | null = null;  
 
   // Login form
   loginEmail = '';
@@ -40,21 +40,21 @@ export class Header implements OnInit, OnDestroy {
   registerConfirmPassword = '';
   registerProfileImage: File | null = null;
   registerProfileImagePreview: string | null = null;
-  isLoading: boolean = false;
 
   // Subscriptions
   private subscriptions = new Subscription();
 
-  constructor(private apiService: ApiGame, private cdr: ChangeDetectorRef, private router: Router) {
-    this.wallet$ = this.apiService.wallet$;
+  constructor(
+    private apiService: ApiGame,
+    private cdr: ChangeDetectorRef,
+    private router: Router
+  ) {
+     this.wallet$ = this.apiService.wallet$;
     this.currentUser$ = this.apiService.currentUser$;
     this.isLoggedIn$ = this.apiService.isLoggedIn$;
   }
-
+  
   ngOnInit(): void {
-    // ✅ เริ่ม loading
-    this.isLoading = true;
-
     // Subscribe to login state
     this.subscriptions.add(
       this.apiService.isLoggedIn$.subscribe((isLoggedIn) => {
@@ -66,25 +66,6 @@ export class Header implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.apiService.currentUser$.subscribe((user) => {
         this.currentUser = user;
-      })
-    );
-
-    // โหลด wallet
-    this.subscriptions.add(
-      this.apiService.getWallet().subscribe({
-        next: (res) => {
-          console.log('💰 ยอดเงิน:', res.wallet);
-          if (this.currentUser) {
-            this.currentUser.wallet = res.wallet;
-          }
-        },
-        error: (err) => {
-          console.error('❌ โหลด wallet ผิดพลาด:', err);
-        },
-        complete: () => {
-          // ✅ โหลดเสร็จ
-          this.isLoading = false;
-        },
       })
     );
   }
