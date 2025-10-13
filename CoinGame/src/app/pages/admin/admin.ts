@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { ApiGame } from '../../services/api-game';
 import { User } from '../../models/users.model';
 import { forkJoin } from 'rxjs';  
@@ -13,39 +12,37 @@ import { Game } from '../../services/api-game';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './admin.html',
-  styleUrls: ['./admin.css'],
+  styleUrl: './admin.css'
 })
 export class Admin implements OnInit {
   // --- User & Menu State ---
   currentUser: User | null = null;
   activeMenu = 'dashboard';
 
-  // --- Game Management State ---
-  allGames: Game[] = [];
-  showGameModal = false;
-  isEditing = false;
-  isLoadingGames = false;
-  isSubmittingForm = false;
-  gamesError: string | null = null;
-  currentGame: Partial<Game> = {};
+  // Stats
+  stats = {
+    totalArticles: 5,
+    totalUsers: 3,
+    totalRevenue: 818300,
+    totalOrders: 740
+  };
 
-  // --- ✅ Game Type Management State ---
-  gameTypes: any[] = [];
-  showTypeModal = false;
-  isSubmittingType = false;
-  newTypeName = '';
-  isLoadingTypes = false; // <-- เพิ่ม State Loading สำหรับประเภท
-  typesError: string | null = null; // <-- เพิ่ม State Error สำหรับประเภท
+  // Top 5 Games
+  topGames: TopGame[] = [
+    { rank: 1, name: 'Fantasy RPG Quest', category: 'RPG', sales: 200, revenue: 179800 },
+    { rank: 2, name: 'Sports Champion', category: 'กีฬา', sales: 180, revenue: 143820 },
+    { rank: 3, name: 'Cyber Adventure 2077', category: 'แอ็คชั่น', sales: 150, revenue: 239850 },
+    { rank: 4, name: 'Speed Racing Pro', category: 'แข่งรถ', sales: 120, revenue: 155880 },
+    { rank: 5, name: 'Strategy Master', category: 'กลยุทธ์', sales: 90, revenue: 98910 }
+  ];
 
-  constructor(private apiService: ApiGame, private router: Router) {}
+  constructor(
+    private apiService: ApiGame,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.currentUser = this.apiService.getCurrentUser();
-    if (!this.currentUser || this.currentUser.role !== 'admin') {
-      alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
-      this.router.navigate(['/']);
-      return;
-    }
   }
 
   // --- Data Loading & Menu ---

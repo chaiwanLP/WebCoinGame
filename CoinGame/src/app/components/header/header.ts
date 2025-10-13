@@ -172,10 +172,8 @@ export class Header implements OnInit, OnDestroy {
     });
   }
 
-  onRegisterSubmit(event: Event) {
-    event.preventDefault(); // ป้องกัน reload หน้า
-
-    // Validation
+  onRegisterSubmit() {
+    // Validate
     if (!this.registerUsername || !this.registerEmail || !this.registerPassword) {
       alert('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
@@ -186,12 +184,12 @@ export class Header implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.registerPassword.length < 6) {
+    if (this.registerPassword.length < 4) {
       alert('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
       return;
     }
 
-    // เรียก API
+    // เรียก API Service
     this.apiService
       .register({
         username: this.registerUsername,
@@ -201,18 +199,24 @@ export class Header implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (response) => {
+          console.log('Register success:', response);
           this.closeRegister();
-          alert(`สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ ${response.user.username}`);
-          // redirect ตาม role
+
+          // Redirect ตาม role
           if (response.user.role === 'admin') {
             this.router.navigate(['/admin']);
           } else {
             this.router.navigate(['/']);
           }
+
+          alert(`สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ ${response.user.username}`);
         },
         error: (error) => {
-          const msg = error.error?.message || 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่';
-          alert(msg);
+          console.error('Register error:', error);
+
+          const errorMessage =
+            error.error?.message || error.message || 'สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่';
+          alert(errorMessage);
         },
       });
   }
@@ -285,22 +289,11 @@ export class Header implements OnInit, OnDestroy {
   }
 
   logout() {
-    if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
-      this.apiService.logout();
-      this.showProfileMenu = false;
-      this.router.navigate(['/']);
-      alert('ออกจากระบบสำเร็จ');
-    }
+  if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
+    this.apiService.logout();
+    this.showProfileMenu = false;
+    this.router.navigate(['/']); 
+    alert('ออกจากระบบสำเร็จ');
   }
-
-  checkLoginBeforeTopUp(event: Event) {
-    if (!this.isLoggedIn) {
-      event.preventDefault(); // ป้องกันลิงก์ทำงาน
-      alert('คุณต้องเข้าสู่ระบบก่อนทำรายการเติมเงิน');
-      this.openLogin(); // เปิด modal login ให้เลย
-    } else {
-      // ถ้า login แล้ว ไปหน้าเติมเงินจริง ๆ
-      this.router.navigate(['/top-up']); // หรือใช้ href ปกติ
-    }
-  }
+}
 }

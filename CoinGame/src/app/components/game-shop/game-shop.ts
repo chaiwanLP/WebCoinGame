@@ -28,20 +28,6 @@ export class ShopComponent implements OnInit {
     await this.loadGameTypes();
     this.isLoading = false;
   }
-  requireLogin(action: Function, alertMessage: string = 'คุณต้องเข้าสู่ระบบก่อน') {
-    if (!this.apiService.isAuthenticated()) {
-      alert(alertMessage);
-      // เปิด modal login ถ้า header มีฟังก์ชัน openLogin()
-      const headerComponent = document.querySelector('app-header') as any;
-      if (headerComponent?.openLogin) {
-        headerComponent.openLogin();
-      }
-      return false;
-    } else {
-      action(); // ถ้า login แล้ว ให้ทำ action ที่ส่งเข้ามา
-      return true;
-    }
-  }
 
   async loadGames(): Promise<void> {
     this.apiService.getAllGames().subscribe({
@@ -81,13 +67,11 @@ export class ShopComponent implements OnInit {
   }
 
   viewGameDetail(game: any): void {
-    this.requireLogin(() => {
+    if (!this.apiService.isAuthenticated()) {
+      alert('Please log in to view game details.');
+      this.router.navigate(['/']);
+    }else{
       this.router.navigate(['/game', game.gid]);
-    }, 'คุณต้องเข้าสู่ระบบก่อนดูรายละเอียดเกม');
-  }
-  checkCart() {
-    this.requireLogin(() => {
-      this.router.navigate(['/cart']);
-    }, 'คุณต้องเข้าสู่ระบบก่อนเข้าตะกร้า');
+    }
   }
 }
