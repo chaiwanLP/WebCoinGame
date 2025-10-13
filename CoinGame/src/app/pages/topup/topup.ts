@@ -16,8 +16,6 @@ import { User } from '../../models/users.model';
 export class Topup {
   // --- State for Top-up Form ---
   wallet$: Observable<number | null>;
-  currentUser: User | null = null;
-
   quickAmounts = [100, 200, 500, 1000, 2000, 5000];
   selectedAmount: number | null = null;
   customAmount: number | null = null;
@@ -53,13 +51,6 @@ export class Topup {
     this.selectedAmount = null;
     this.customAmount = null;
   }
-  updateWallet(): void {
-    this.currentUser = this.apiGame.getCurrentUser();
-    this.apiGame.getWallet().subscribe((res) => {
-      console.log('💰 ยอดเงิน:', res.wallet);
-      this.currentUser!.wallet = res.wallet;
-    });
-  }
 
   topUp(): void {
     if (!this.total || this.total <= 0) {
@@ -77,7 +68,6 @@ export class Topup {
       },
     });
   }
-
 
   /**
    * ถูกเรียกเมื่อกดปุ่ม "ประวัติการเติม"
@@ -109,7 +99,7 @@ export class Topup {
       // **กรณีสำเร็จ (Success)**
       this.history = [
         { transaction_date: '2025-10-12T10:00:00Z', amount: 500, status: 'Completed' },
-        { transaction_date: '2025-09-28T15:30:00Z', amount: 200, status: 'Completed' }
+        { transaction_date: '2025-09-28T15:30:00Z', amount: 200, status: 'Completed' },
       ];
       this.isLoadingHistory = false;
 

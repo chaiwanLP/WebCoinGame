@@ -81,40 +81,6 @@ export class ApiGame {
       })
     );
   }
-  getWallet() {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser?.id) {
-      return throwError(() => new Error('User not authenticated for top-up'));
-    }
-    const uid = currentUser?.id;
-    return this.http
-      .get<{ wallet: number }>(`${this.constants.API_ENDPOINT}/getWallet?uid=${uid}`)
-      .pipe(
-        tap((response) => {
-          console.log('💰 Wallet:', response.wallet);
-        }),
-        catchError((error) => {
-          console.error('❌ Get wallet failed:', error);
-          return throwError(() => error);
-        })
-      );
-  }
-  getOwnGame() {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser?.id) {
-      return throwError(() => new Error('User not authenticated for top-up'));
-    }
-    const uid = currentUser?.id;
-    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/profile?uid=${uid}`).pipe(
-      tap((response) => {
-        console.log('game', response);
-      }),
-      catchError((error) => {
-        console.error('❌ Get wallet failed:', error);
-        return throwError(() => error);
-      })
-    );
-  }
 
   logout(): void {
     localStorage.removeItem('Auth');

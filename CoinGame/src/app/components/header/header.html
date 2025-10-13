@@ -16,7 +16,6 @@
     </a>
   </nav>
 
-
   <!-- Auth Buttons -->
   <div class="flex gap-3 items-center">
     <!-- ถ้ายังไม่ login -->
@@ -39,16 +38,7 @@
           class="w-10 h-10 rounded-full object-cover border-2 border-[#5cead6]">
         <div class="text-left">
           <p class="text-white font-medium text-sm">{{ currentUser.username }}</p>
-
-<p *ngIf="isLoading" class="text-[#5cead6] text-xs">
-  ⏳Loading...
-</p>
-
-<!-- ข้อความแสดงยอดเงินเมื่อโหลดเสร็จและมี wallet -->
-<p *ngIf="!isLoading && currentUser?.wallet != null" class="text-[#5cead6] text-xs">
-  {{ currentUser.wallet | number }} บาท
-</p>
-
+          <p class="text-[#5cead6] text-xs">{{ currentUser.wallet | number}} บาท</p>
         </div>
         <svg class="w-5 h-5 text-[#5cead6] transition-transform duration-300" [class.rotate-180]="showProfileMenu"
           fill="none" stroke="currentColor" viewBox="0 0 24 24">

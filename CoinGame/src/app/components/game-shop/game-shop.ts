@@ -18,15 +18,12 @@ export class ShopComponent implements OnInit {
   game_types: any[] = [];
   selectedTypeId: string = '';
   keyword: string = '';
-  isLoading = false;
 
   constructor(private apiService: ApiGame, private router: Router) {}
 
-  async ngOnInit(): Promise<void> {
-    this.isLoading = true;
-    await this.loadGames();
-    await this.loadGameTypes();
-    this.isLoading = false;
+  ngOnInit(): void {
+    this.loadGames();
+    this.loadGameTypes();
   }
   requireLogin(action: Function, alertMessage: string = 'คุณต้องเข้าสู่ระบบก่อน') {
     if (!this.apiService.isAuthenticated()) {
@@ -43,7 +40,7 @@ export class ShopComponent implements OnInit {
     }
   }
 
-  async loadGames(): Promise<void> {
+  loadGames(): void {
     this.apiService.getAllGames().subscribe({
       next: (response) => {
         this.games = response;
@@ -55,7 +52,7 @@ export class ShopComponent implements OnInit {
     });
   }
 
-  async loadGameTypes(): Promise<void> {
+  loadGameTypes(): void {
     this.apiService.getGameTypes().subscribe({
       next: (response) => {
         this.game_types = response;
