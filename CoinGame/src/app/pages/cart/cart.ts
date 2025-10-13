@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common'; // 👈 1. Import CommonModule
-import { RouterLink } from '@angular/router';     // 👈 2. Import RouterLink (ถ้ามีใน html)
+import { RouterLink } from '@angular/router'; // 👈 2. Import RouterLink (ถ้ามีใน html)
 import { ApiGame, Game } from '../../services/api-game';
 import { Observable } from 'rxjs';
 
@@ -12,7 +12,7 @@ import { Observable } from 'rxjs';
     RouterLink,
   ],
   templateUrl: './cart.html',
-  styleUrls: ['./cart.css']
+  styleUrls: ['./cart.css'],
 })
 export class Cart {
   cartItems$!: Observable<Game[]>;
@@ -42,9 +42,15 @@ export class Cart {
    * ถูกเรียกเมื่อผู้ใช้กดปุ่ม "ลบ"
    */
   onRemoveItem(gid: string): void {
+    this.isLoading = true;
     this.apiService.removeFromCart(gid).subscribe({
-      // ไม่ต้องทำอะไรใน next เพราะ Service จัดการอัปเดต UI ให้แล้ว
-      error: (err) => alert('เกิดข้อผิดพลาดในการลบสินค้า'),
+      next: () => {
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+        alert('เกิดข้อผิดพลาดในการลบสินค้า');
+      },
     });
   }
 

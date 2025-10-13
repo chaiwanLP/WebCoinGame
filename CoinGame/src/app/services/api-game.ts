@@ -302,23 +302,23 @@ export class ApiGame {
       );
   }
 
-  removeFromCart(gid: string): Observable<any> {
-    const currentUser = this.getCurrentUser();
-    const userId = currentUser?.id || (currentUser as any)?.uid;
-    if (!userId) return throwError(() => new Error('User not logged in'));
+  removeFromCart(cid: string): Observable<any> {
+    return this.http.get<any>(`${this.constants.API_ENDPOINT}/delete-cart?cid=${cid}`).pipe(
+      tap((res) => {
+        const deletedGid = res.gid;
+        if (!deletedGid) {
+          console.warn('ไม่พบ GID ที่ถูกลบใน response');
+          return;
+        }
 
-    return this.http
-      .post<any>(
-        `${this.constants.API_ENDPOINT}/delete-cart`,
-        { uid: userId, gid },
-        this.getAuthHeaders()
-      )
-      .pipe(
-        tap(() => {
-          const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== gid);
-          this.cartItemsSubject.next(updatedItems);
-        })
-      );
+        const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== deletedGid);
+        this.cartItemsSubject.next(updatedItems);
+      }),
+      catchError((error) => {
+        console.error('ลบเกมออกจากตะกร้าล้มเหลว:', error);
+        return throwError(() => error);
+      })
+    );
   }
   checkOwnGame(gid: string): Observable<any> {
     const uid = this.getCurrentUser()?.id;
