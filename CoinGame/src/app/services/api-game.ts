@@ -279,8 +279,10 @@ export class ApiGame {
     return this.http
       .post<any>(
         `${this.constants.API_ENDPOINT}/delete-cart`,
-        { uid: userId, gid },
-        this.getAuthHeaders()
+        {
+          ...this.getAuthHeaders(),
+          params: { uid: userId, gid }
+        }
       )
       .pipe(
         tap(() => {
