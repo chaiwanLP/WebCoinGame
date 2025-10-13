@@ -361,6 +361,32 @@ export class ApiGame {
       );
   }
 
+   /**
+   * ดึงข้อมูลประวัติการซื้อเกมของผู้ใช้ปัจจุบัน
+   */
+  getPurchaseHistory(): Observable<any[]> {
+    const userId = this.getCurrentUser()?.id;
+    if (!userId) {
+      return throwError(() => new Error('User not authenticated'));
+    }
+
+    // 1. เปลี่ยนเป็น GET และส่ง uid เป็น query parameter ใน URL
+    return this.http.get<any[]>(
+      `${this.constants.API_ENDPOINT}/get-history-buygame?uid=${userId}`,
+      this.getAuthHeaders()
+    ).pipe(
+      // 2. แปลงข้อมูลวันที่จาก Firestore timestamp ให้อยู่ในรูปแบบที่ใช้งานได้
+      map(historyItems =>
+        historyItems.map(item => {
+          if (item.buy_add && item.buy_add._seconds) {
+            item.buy_add = new Date(item.buy_add._seconds * 1000);
+          }
+          return item;
+        })
+      )
+    );
+  }
+
   // ========================================
   //  General Game & Type Methods
   // ========================================
