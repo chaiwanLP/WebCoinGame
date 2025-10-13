@@ -81,6 +81,18 @@ export class ApiGame {
       })
     );
   }
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  public loading$ = this.loadingSubject.asObservable();
+  fetchCartItems(): Observable<Game[]> {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
+    }
+    const uid = currentUser?.id;
+    return this.http
+      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart?uid=${uid}`)
+      .pipe(tap((items) => this.cartItemsSubject.next(items)));
+  }
   getWallet() {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
