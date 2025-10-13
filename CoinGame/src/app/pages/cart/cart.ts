@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common'; // 👈 1. Import CommonModule
-import { RouterLink } from '@angular/router'; // 👈 2. Import RouterLink (ถ้ามีใน html)
+import { RouterLink } from '@angular/router';     // 👈 2. Import RouterLink (ถ้ามีใน html)
 import { ApiGame, Game } from '../../services/api-game';
 import { Observable } from 'rxjs';
 
@@ -12,7 +12,7 @@ import { Observable } from 'rxjs';
     RouterLink,
   ],
   templateUrl: './cart.html',
-  styleUrls: ['./cart.css'],
+  styleUrls: ['./cart.css']
 })
 export class Cart {
   cartItems$!: Observable<Game[]>;

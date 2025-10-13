@@ -274,10 +274,13 @@ export class ApiGame {
     if (!userId) return;
 
     this.http
-      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart`, {
-        ...this.getAuthHeaders(),
-        params: { uid: userId },
-      })
+      .get<Game[]>(
+        `${this.constants.API_ENDPOINT}/cart`,
+        {
+          ...this.getAuthHeaders(),
+          params: { uid: userId }
+        }
+      )
       .subscribe({
         next: (items) => this.cartItemsSubject.next(items || []),
         error: (err) => this.cartItemsSubject.next([]),
