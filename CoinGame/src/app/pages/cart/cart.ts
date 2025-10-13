@@ -69,6 +69,10 @@ export class Cart {
     this.showHistoryModal = true;
     this.loadHistory();
   }
+  openHistoryModal(): void {
+    this.showHistoryModal = true;
+    this.loadHistory();
+  }
 
   /**
    * ถูกเรียกเมื่อกดปิด Modal
