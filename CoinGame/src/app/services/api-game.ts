@@ -100,6 +100,40 @@ export class ApiGame {
     this.isLoggedInSubject.next(false);
     this.currentUserSubject.next(null);
   }
+  getWallet() {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
+    }
+    const uid = currentUser?.id;
+    return this.http
+      .get<{ wallet: number }>(`${this.constants.API_ENDPOINT}/getWallet?uid=${uid}`)
+      .pipe(
+        tap((response) => {
+          console.log('💰 Wallet:', response.wallet);
+        }),
+        catchError((error) => {
+          console.error('❌ Get wallet failed:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+  getHistoryTopup() {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
+    }
+    const uid = currentUser.id;
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/get-history-topup?uid=${uid}`).pipe(
+      tap((response) => {
+        console.log('history top up:', response);
+      }),
+      catchError((error) => {
+        console.error('❌ Get history failed:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;

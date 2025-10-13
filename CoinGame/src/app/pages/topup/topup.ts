@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiGame } from '../../services/api-game';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-topup',
@@ -26,6 +27,9 @@ export class Topup {
 
   constructor(private apiGame: ApiGame) {
     this.wallet$ = this.apiGame.wallet$;
+  }
+  ngOnInit(): void {
+    this.wallet$ = this.apiGame.getWallet().pipe(map((res) => res.wallet));
   }
 
   get total(): number {
@@ -59,13 +63,13 @@ export class Topup {
     alert(`กำลังจะเติมเงิน ${this.total} บาท (ยังไม่เชื่อมต่อ API)`);
   }
 
-
   /**
    * ถูกเรียกเมื่อกดปุ่ม "ประวัติการเติม"
    */
-  openHistoryModal(): void {
+  async openHistoryModal(): Promise<void> {
     this.showHistoryModal = true;
-    this.loadHistory(); // เริ่มโหลดข้อมูลเมื่อเปิด Modal
+    await this.loadHistory(); // เริ่มโหลดข้อมูลเมื่อเปิด Modal
+    console.log(this.history);
   }
 
   /**
@@ -78,30 +82,21 @@ export class Topup {
   /**
    * โหลดข้อมูลประวัติ (ยังไม่เชื่อม API)
    */
-  loadHistory(): void {
+  async loadHistory(): Promise<void> {
     this.isLoadingHistory = true;
     this.historyError = null;
-    this.history = []; // เคลียร์ข้อมูลเก่า
+    this.history = [];
 
-    // จำลองการหน่วงเวลาของ API
-    setTimeout(() => {
-      // --- ลองสลับ Comment เพื่อทดสอบสถานะต่างๆ ---
-
-      // **กรณีสำเร็จ (Success)**
-      this.history = [
-        { transaction_date: '2025-10-12T10:00:00Z', amount: 500, status: 'Completed' },
-        { transaction_date: '2025-09-28T15:30:00Z', amount: 200, status: 'Completed' }
-      ];
-      this.isLoadingHistory = false;
-
-      // **กรณีไม่พบข้อมูล (No Data)**
-      // this.history = [];
-      // this.isLoadingHistory = false;
-
-      // **กรณีเกิดข้อผิดพลาด (Error)**
-      // this.historyError = "ไม่สามารถโหลดข้อมูลประวัติได้";
-      // this.isLoadingHistory = false;
-
-    }, 1500); // หน่วงเวลา 1.5 วินาที
+    this.apiGame.getHistoryTopup().subscribe({
+      next: (response) => {
+        this.history = response;
+        this.isLoadingHistory = false;
+      },
+      error: (error) => {
+        console.error('Error loading history:', error);
+        this.historyError = 'ไม่สามารถโหลดข้อมูลประวัติได้';
+        this.isLoadingHistory = false;
+      },
+    });
   }
 }
