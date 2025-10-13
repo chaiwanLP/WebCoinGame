@@ -25,7 +25,7 @@ export class Topup {
   historyError: string | null = null;
 
   constructor(private apiGame: ApiGame) {
-     this.wallet$ = this.apiGame.getWallet().pipe(map((res) => res.wallet));
+    this.wallet$ = this.apiGame.getWallet().pipe(map((res) => res.wallet));
   }
 
   get total(): number {
@@ -75,5 +75,37 @@ export class Topup {
       },
     });
   }
-  
+  async openHistoryModal(): Promise<void> {
+    this.showHistoryModal = true;
+    await this.loadHistory(); // เริ่มโหลดข้อมูลเมื่อเปิด Modal
+    console.log(this.history);
+  }
+
+  /**
+   * ถูกเรียกเมื่อกดปิด Modal
+   */
+  closeHistoryModal(): void {
+    this.showHistoryModal = false;
+  }
+
+  /**
+   * โหลดข้อมูลประวัติ (ยังไม่เชื่อม API)
+   */
+  async loadHistory(): Promise<void> {
+    this.isLoadingHistory = true;
+    this.historyError = null;
+    this.history = [];
+
+    this.apiGame.getHistoryTopup().subscribe({
+      next: (response) => {
+        this.history = response;
+        this.isLoadingHistory = false;
+      },
+      error: (error) => {
+        console.error('Error loading history:', error);
+        this.historyError = 'ไม่สามารถโหลดข้อมูลประวัติได้';
+        this.isLoadingHistory = false;
+      },
+    });
+  }
 }

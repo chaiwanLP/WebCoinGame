@@ -112,6 +112,23 @@ export class ApiGame {
         })
       );
   }
+  getHistoryTopup() {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
+    }
+    const uid = currentUser.id;
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/get-history-topup?uid=${uid}`).pipe(
+      tap((response) => {
+        console.log('history top up:', response);
+      }),
+      catchError((error) => {
+        console.error('❌ Get history failed:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   getOwnGame() {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
