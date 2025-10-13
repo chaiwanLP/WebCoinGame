@@ -1,98 +1,93 @@
+import { Users } from './../../models/users.model';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ApiGame } from '../../services/api-game';
 
 @Component({
   selector: 'app-shop',
+  standalone: true,
+  imports: [FormsModule, CommonModule],
   templateUrl: './game-shop.html',
   styleUrls: ['./game-shop.css'],
-  imports: [
-    FormsModule,
-    CommonModule
-  ]
 })
-export class ShopComponent {
+export class ShopComponent implements OnInit {
+  games: any[] = [];
+  filteredGames: any[] = [];
+  game_types: any[] = [];
+  selectedTypeId: string = '';
   keyword: string = '';
-  category: string = '';
+  isLoading = false;
 
-   categories: string[] = [
-    'Action-adventure',
-    'Battle Royale',
-    'Survival Horror',
-    'RPG',
-    'Racing',
-    'Sports',
-    'Shooter'
-  ];
+  constructor(private apiService: ApiGame, private router: Router) {}
 
-
-    games = [
-  { 
-    title: 'Grand Theft Auto V', 
-    category: 'Action-adventure', 
-    price: 955,
-    img: 'assets/images/chick.png'  // ✅ ถูกต้อง
-  },
-  { 
-    title: 'Pubg', 
-    category: 'Battle Royale', 
-    price: 400,
-    img: 'assets/images/chick.png'
-  },
-  { 
-    title: 'R.E.P.O', 
-    category: 'Survival Horror', 
-    price: 220,
-    img: 'assets/images/chick.png'
-  },
-  { 
-    title: 'The Witcher 3', 
-    category: 'RPG', 
-    price: 1200,
-    img: 'assets/images/chick.png'
-  },
-  { 
-    title: 'Cyberpunk 2077', 
-    category: 'RPG', 
-    price: 1500,
-    img: 'assets/images/chick.png'
-  },
-  { 
-    title: 'FIFA 24', 
-    category: 'Sports', 
-    price: 1800,
-    img: 'assets/images/chick.png'
-  },
-  { 
-    title: 'NBA 2K24', 
-    category: 'Sports', 
-    price: 1700,
-    img: 'assets/images/chick.png'
-  },
-  { 
-    title: 'Call of Duty: Modern Warfare II', 
-    category: 'Shooter', 
-    price: 2100,
-    img: 'assets/images/chick.png'
-  },
-  { 
-    title: 'Need for Speed Heat', 
-    category: 'Racing', 
-    price: 899,
-    img: 'assets/images/chick.png'
-  },
-  { 
-    title: 'Forza Horizon 5', 
-    category: 'Racing', 
-    price: 1900,
-    img: 'assets/images/chick.png'
+  async ngOnInit(): Promise<void> {
+    this.isLoading = true;
+    await this.loadGames();
+    await this.loadGameTypes();
+    this.isLoading = false;
   }
-];
+  requireLogin(action: Function, alertMessage: string = 'คุณต้องเข้าสู่ระบบก่อน') {
+    if (!this.apiService.isAuthenticated()) {
+      alert(alertMessage);
+      // เปิด modal login ถ้า header มีฟังก์ชัน openLogin()
+      const headerComponent = document.querySelector('app-header') as any;
+      if (headerComponent?.openLogin) {
+        headerComponent.openLogin();
+      }
+      return false;
+    } else {
+      action(); // ถ้า login แล้ว ให้ทำ action ที่ส่งเข้ามา
+      return true;
+    }
+  }
 
-  get filteredGames() {
-    return this.games.filter(game =>
-      game.title.toLowerCase().includes(this.keyword.toLowerCase()) &&
-      (this.category ? game.category === this.category : true)
-    );
+  async loadGames(): Promise<void> {
+    this.apiService.getAllGames().subscribe({
+      next: (response) => {
+        this.games = response;
+        this.filteredGames = response; // แสดงทั้งหมดตอนเริ่มต้น
+      },
+      error: (error) => {
+        console.error('Error loading games:', error);
+      },
+    });
+  }
+
+  async loadGameTypes(): Promise<void> {
+    this.apiService.getGameTypes().subscribe({
+      next: (response) => {
+        this.game_types = response;
+      },
+      error: (error) => {
+        console.error('Error loading game types:', error);
+      },
+    });
+  }
+
+  searchGames(): void {
+    this.filteredGames = this.games.filter((game) => {
+      // Filter by keyword
+      const matchKeyword = this.keyword
+        ? game.game_name.toLowerCase().includes(this.keyword.toLowerCase())
+        : true;
+
+      // Filter by type
+      const matchType = this.selectedTypeId ? game.tid === this.selectedTypeId : true;
+
+      return matchKeyword && matchType;
+    });
+  }
+
+  viewGameDetail(game: any): void {
+    this.requireLogin(() => {
+      this.router.navigate(['/game', game.gid]);
+    }, 'คุณต้องเข้าสู่ระบบก่อนดูรายละเอียดเกม');
+  }
+  checkCart() {
+    this.requireLogin(() => {
+      this.router.navigate(['/cart']);
+    }, 'คุณต้องเข้าสู่ระบบก่อนเข้าตะกร้า');
   }
 }

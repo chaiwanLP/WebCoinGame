@@ -6,63 +6,122 @@
     <a href="#" class="text-gray-300 hover:text-[#5cead6] font-medium transition-colors duration-300">
       ร้านค้า
     </a>
-    <a href="#" class="text-gray-300 hover:text-[#5cead6] font-medium transition-colors duration-300">
+    <a href="/topup" (click)="checkLoginBeforeTopUp($event)"
+      class="text-gray-300 hover:text-[#5cead6] font-medium transition-colors duration-300">
       เติมเงิน
     </a>
+
     <a href="#" class="text-gray-300 hover:text-[#5cead6] font-medium transition-colors duration-300">
       อันดับ
     </a>
   </nav>
 
+
   <!-- Auth Buttons -->
-  <div class="flex gap-3">
-    <button 
-      (click)="openLogin()" 
-      class="px-6 py-2.5 border-2 border-[#5cead6] text-[#5cead6] rounded-lg font-medium hover:bg-[#5cead6] hover:text-[#1e1e2f] transition-all duration-300"
-    >
-      เข้าสู่ระบบ
-    </button>
-    <button 
-      (click)="openRegister()" 
-      class="px-6 py-2.5 bg-[#5cead6] text-[#1e1e2f] rounded-lg font-medium hover:bg-[#4dd4c0] transition-all duration-300"
-    >
-      สมัครสมาชิก
-    </button>
+  <div class="flex gap-3 items-center">
+    <!-- ถ้ายังไม่ login -->
+    <ng-container *ngIf="!isLoggedIn">
+      <button (click)="openLogin()"
+        class="px-6 py-2.5 border-2 border-[#5cead6] text-[#5cead6] rounded-lg font-medium hover:bg-[#5cead6] hover:text-[#1e1e2f] transition-all duration-300">
+        เข้าสู่ระบบ
+      </button>
+      <button (click)="openRegister()"
+        class="px-6 py-2.5 bg-[#5cead6] text-[#1e1e2f] rounded-lg font-medium hover:bg-[#4dd4c0] transition-all duration-300">
+        สมัครสมาชิก
+      </button>
+    </ng-container>
+
+    <!-- ถ้า login แล้ว -->
+    <div *ngIf="isLoggedIn && currentUser" class="relative">
+      <button (click)="toggleProfileMenu()"
+        class="flex items-center gap-3 px-4 py-2 bg-[#1e1e2f] rounded-lg border-2 border-[#5cead6] hover:bg-[#2a2a40] transition-all duration-300">
+        <img [src]="currentUser.profile_img" [alt]="currentUser.username"
+          class="w-10 h-10 rounded-full object-cover border-2 border-[#5cead6]">
+        <div class="text-left">
+          <p class="text-white font-medium text-sm">{{ currentUser.username }}</p>
+
+<p *ngIf="isLoading" class="text-[#5cead6] text-xs">
+  ⏳Loading...
+</p>
+
+<!-- ข้อความแสดงยอดเงินเมื่อโหลดเสร็จและมี wallet -->
+<p *ngIf="!isLoading && currentUser?.wallet != null" class="text-[#5cead6] text-xs">
+  {{ currentUser.wallet | number }} บาท
+</p>
+
+        </div>
+        <svg class="w-5 h-5 text-[#5cead6] transition-transform duration-300" [class.rotate-180]="showProfileMenu"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <!-- Dropdown Menu -->
+      <div *ngIf="showProfileMenu"
+        class="absolute right-0 mt-2 w-56 bg-[#1e1e2f] border border-[#5cead6] border-opacity-30 rounded-lg shadow-xl overflow-hidden z-50">
+        <a href="/profile"
+          class="block px-4 py-3 text-gray-300 hover:bg-[#2a2a40] hover:text-[#5cead6] transition-colors duration-200">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>โปรไฟล์</span>
+          </div>
+        </a>
+        <a href="#"
+          class="block px-4 py-3 text-gray-300 hover:bg-[#2a2a40] hover:text-[#5cead6] transition-colors duration-200">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span>ตะกร้า</span>
+          </div>
+        </a>
+        <hr class="border-gray-700">
+        <button (click)="logout()"
+          class="w-full text-left px-4 py-3 text-red-400 hover:bg-[#2a2a40] hover:text-red-300 transition-colors duration-200">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>ออกจากระบบ</span>
+          </div>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
 <!-- Login Modal -->
-<div 
-  *ngIf="showLogin" 
-  class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
-  (click)="closeLogin()"
->
-  <div 
+<div *ngIf="showLogin" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+  (click)="closeLogin()">
+  <div
     class="bg-gradient-to-br from-[#2a2a40] to-[#1e1e2f] rounded-2xl w-11/12 max-w-md p-10 shadow-2xl border border-[#5cead6] border-opacity-20 relative"
-    (click)="$event.stopPropagation()"
-  >
-    <button 
-      (click)="closeLogin()"
-      class="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-4xl leading-none transition-colors duration-300"
-    >
+    (click)="$event.stopPropagation()">
+    <button (click)="closeLogin()" [disabled]="isLoginLoading"
+      class="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-4xl leading-none transition-colors duration-300 disabled:opacity-50">
       ×
     </button>
 
     <h2 class="text-3xl font-bold text-[#5cead6] mb-8 text-center">เข้าสู่ระบบ</h2>
-    
+
+    <!-- Error Message -->
+    <div *ngIf="loginError"
+      class="mb-6 p-4 bg-red-500 bg-opacity-20 border border-red-500 rounded-lg text-red-300 text-sm">
+      ⚠️ {{ loginError }}
+    </div>
+
     <form (ngSubmit)="onLoginSubmit()" class="space-y-6">
       <div>
         <label class="block text-gray-300 text-sm font-medium mb-2">
           อีเมล
         </label>
-        <input 
-          type="email"
-          [(ngModel)]="loginEmail"
-          name="loginEmail"
-          placeholder="กรอกอีเมล"
-          required
-          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300"
-        >
+        <input type="email" [(ngModel)]="loginEmail" name="loginEmail" placeholder="กรอกอีเมล" required
+          [disabled]="isLoginLoading"
+          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
       </div>
 
       <div>
@@ -70,39 +129,34 @@
           รหัสผ่าน
         </label>
         <div class="relative">
-          <input 
-            [type]="showPassword ? 'text' : 'password'"
-            [(ngModel)]="loginPassword"
-            name="loginPassword"
-            placeholder="กรอกรหัสผ่าน"
-            required
-            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300"
-          >
-          <button 
-            type="button"
-            (click)="togglePasswordVisibility()"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-xl opacity-60 hover:opacity-100 transition-opacity duration-300"
-          >
+          <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="loginPassword" name="loginPassword"
+            placeholder="กรอกรหัสผ่าน" required [disabled]="isLoginLoading"
+            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="button" (click)="togglePasswordVisibility()" [disabled]="isLoginLoading"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-xl opacity-60 hover:opacity-100 transition-opacity duration-300 disabled:opacity-30">
             <span *ngIf="!showPassword">👁️</span>
             <span *ngIf="showPassword">👁️‍🗨️</span>
           </button>
         </div>
       </div>
 
-      <button 
-        type="submit"
-        class="w-full bg-[#5cead6] text-[#1e1e2f] px-6 py-3.5 rounded-lg font-semibold hover:bg-[#4dd4c0] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#5cead6]/30 active:translate-y-0 transition-all duration-300"
-      >
-        เข้าสู่ระบบ
+      <button type="submit" [disabled]="isLoginLoading || !loginEmail || !loginPassword"
+        class="w-full bg-[#5cead6] text-[#1e1e2f] px-6 py-3.5 rounded-lg font-semibold hover:bg-[#4dd4c0] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#5cead6]/30 active:translate-y-0 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+        <span *ngIf="!isLoginLoading">เข้าสู่ระบบ</span>
+        <span *ngIf="isLoginLoading" class="flex items-center justify-center gap-2">
+          <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+          </svg>
+          กำลังเข้าสู่ระบบ...
+        </span>
       </button>
 
       <p class="text-center text-gray-400 text-sm mt-4">
-        ยังไม่มีบัญชี? 
-        <button 
-          type="button"
-          (click)="switchToRegister()"
-          class="text-[#5cead6] hover:underline ml-1"
-        >
+        ยังไม่มีบัญชี?
+        <button type="button" (click)="switchToRegister()" class="text-[#5cead6] hover:underline ml-1">
           สมัครสมาชิก
         </button>
       </p>
@@ -111,71 +165,40 @@
 </div>
 
 <!-- Register Modal -->
-<div 
-  *ngIf="showRegister" 
-  class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
-  (click)="closeRegister()"
->
-  <div 
+<div *ngIf="showRegister" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
+  (click)="closeRegister()">
+  <div
     class="bg-gradient-to-br from-[#2a2a40] to-[#1e1e2f] rounded-2xl w-11/12 max-w-md p-10 shadow-2xl border border-[#5cead6] border-opacity-20 relative max-h-[90vh] overflow-y-auto"
-    (click)="$event.stopPropagation()"
-  >
-    <button 
-      (click)="closeRegister()"
-      class="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-4xl leading-none transition-colors duration-300"
-    >
+    (click)="$event.stopPropagation()"> <!-- ป้องกัน modal ปิดเมื่อคลิกภายใน -->
+
+    <button (click)="closeRegister()"
+      class="absolute top-4 right-4 text-gray-400 hover:text-red-400 text-4xl leading-none transition-colors duration-300">
       ×
     </button>
 
     <h2 class="text-3xl font-bold text-[#5cead6] mb-8 text-center">สมัครสมาชิก</h2>
-    
-    <form (ngSubmit)="onRegisterSubmit()" class="space-y-5">
+
+    <form (ngSubmit)="onRegisterSubmit($event)" class="space-y-5">
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          ชื่อผู้ใช้
-        </label>
-        <input 
-          type="text"
-          [(ngModel)]="registerUsername"
-          name="registerUsername"
-          placeholder="กรอกชื่อผู้ใช้"
-          required
-          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300"
-        >
+        <label class="block text-gray-300 text-sm font-medium mb-2">ชื่อผู้ใช้</label>
+        <input type="text" [(ngModel)]="registerUsername" name="registerUsername" placeholder="กรอกชื่อผู้ใช้" required
+          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300">
       </div>
 
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          อีเมล
-        </label>
-        <input 
-          type="email"
-          [(ngModel)]="registerEmail"
-          name="registerEmail"
-          placeholder="กรอกอีเมล"
-          required
-          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300"
-        >
+        <label class="block text-gray-300 text-sm font-medium mb-2">อีเมล</label>
+        <input type="email" [(ngModel)]="registerEmail" name="registerEmail" placeholder="กรอกอีเมล" required
+          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300">
       </div>
 
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          รหัสผ่าน
-        </label>
+        <label class="block text-gray-300 text-sm font-medium mb-2">รหัสผ่าน</label>
         <div class="relative">
-          <input 
-            [type]="showPassword ? 'text' : 'password'"
-            [(ngModel)]="registerPassword"
-            name="registerPassword"
-            placeholder="กรอกรหัสผ่าน"
-            required
-            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300"
-          >
-          <button 
-            type="button"
-            (click)="togglePasswordVisibility()"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-xl opacity-60 hover:opacity-100 transition-opacity duration-300"
-          >
+          <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="registerPassword" name="registerPassword"
+            placeholder="กรอกรหัสผ่าน" required
+            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300">
+          <button type="button" (click)="togglePasswordVisibility()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-xl opacity-60 hover:opacity-100 transition-opacity duration-300">
             <span *ngIf="!showPassword">👁️</span>
             <span *ngIf="showPassword">👁️‍🗨️</span>
           </button>
@@ -183,23 +206,13 @@
       </div>
 
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          รหัสผ่านยืนยัน
-        </label>
+        <label class="block text-gray-300 text-sm font-medium mb-2">รหัสผ่านยืนยัน</label>
         <div class="relative">
-          <input 
-            [type]="showConfirmPassword ? 'text' : 'password'"
-            [(ngModel)]="registerConfirmPassword"
-            name="registerConfirmPassword"
-            placeholder="กรอกรหัสผ่านอีกครั้ง"
-            required
-            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300"
-          >
-          <button 
-            type="button"
-            (click)="toggleConfirmPasswordVisibility()"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-xl opacity-60 hover:opacity-100 transition-opacity duration-300"
-          >
+          <input [type]="showConfirmPassword ? 'text' : 'password'" [(ngModel)]="registerConfirmPassword"
+            name="registerConfirmPassword" placeholder="กรอกรหัสผ่านอีกครั้ง" required
+            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-[#5cead6] focus:ring-2 focus:ring-[#5cead6] focus:ring-opacity-20 transition-all duration-300">
+          <button type="button" (click)="toggleConfirmPasswordVisibility()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-xl opacity-60 hover:opacity-100 transition-opacity duration-300">
             <span *ngIf="!showConfirmPassword">👁️</span>
             <span *ngIf="showConfirmPassword">👁️‍🗨️</span>
           </button>
@@ -207,44 +220,28 @@
       </div>
 
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">
-          เลือกรูปโปรไฟล์
-        </label>
+        <label class="block text-gray-300 text-sm font-medium mb-2">เลือกรูปโปรไฟล์</label>
         <div class="flex items-center gap-4">
-          <label 
-            class="flex-1 bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-gray-400 cursor-pointer hover:border-[#5cead6] transition-all duration-300"
-          >
-            <input 
-              type="file"
-              (change)="onFileSelected($event)"
-              accept="image/*"
-              class="hidden"
-            >
+          <label
+            class="flex-1 bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-gray-400 cursor-pointer hover:border-[#5cead6] transition-all duration-300">
+            <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden">
             <span class="text-sm">{{ registerProfileImage ? registerProfileImage.name : 'เลือกไฟล์...' }}</span>
           </label>
-          <div 
-            *ngIf="registerProfileImagePreview"
-            class="w-16 h-16 rounded-full overflow-hidden border-2 border-[#5cead6]"
-          >
+          <div *ngIf="registerProfileImagePreview"
+            class="w-16 h-16 rounded-full overflow-hidden border-2 border-[#5cead6]">
             <img [src]="registerProfileImagePreview" alt="Preview" class="w-full h-full object-cover">
           </div>
         </div>
       </div>
 
-      <button 
-        type="submit"
-        class="w-full bg-[#5cead6] text-[#1e1e2f] px-6 py-3.5 rounded-lg font-semibold hover:bg-[#4dd4c0] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#5cead6]/30 active:translate-y-0 transition-all duration-300 mt-6"
-      >
+      <button type="submit"
+        class="w-full bg-[#5cead6] text-[#1e1e2f] px-6 py-3.5 rounded-lg font-semibold hover:bg-[#4dd4c0] hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#5cead6]/30 active:translate-y-0 transition-all duration-300 mt-6">
         สมัครสมาชิก
       </button>
 
       <p class="text-center text-gray-400 text-sm mt-4">
-        มีบัญชีอยู่แล้ว? 
-        <button 
-          type="button"
-          (click)="switchToLogin()"
-          class="text-[#5cead6] hover:underline ml-1"
-        >
+        มีบัญชีอยู่แล้ว?
+        <button type="button" (click)="switchToLogin()" class="text-[#5cead6] hover:underline ml-1">
           เข้าสู่ระบบ
         </button>
       </p>

@@ -1,0 +1,79 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<main class="flex-1 p-6 bg-gray-900">
+    <div class="max-w-5xl mx-auto px-4 py-6">
+
+        <div class="text-center mb-10">
+            <div class="relative inline-block w-full max-w-md p-8 rounded-3xl bg-gradient-to-r from-purple-700 via-pink-600 to-red-500 shadow-lg overflow-hidden">
+                <div class="relative z-10">
+                    <div class="text-white/70 text-sm mb-2">ยอดเงินปัจจุบัน</div>
+
+                    <div *ngIf="wallet$ | async as currentBalance" class="text-5xl font-bold text-white gradient-text">
+                        {{ currentBalance | number }}
+                    </div>
+
+                    <div *ngIf="(wallet$ | async) === null" class="text-3xl font-bold text-white">
+                        กำลังโหลด...
+                    </div>
+
+                    <div class="text-white/70 text-sm mt-2">บาท</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-gray-900 min-h-screen flex justify-center items-start">
+            <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-gray-300 font-semibold mb-4 flex items-center">💰 จำนวนเงินแนะนำ</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button *ngFor="let amount of quickAmounts" (click)="selectAmount(amount)" [ngClass]="{
+                                  'bg-blue-600': amount === selectedAmount,
+                                  'bg-gray-700': amount !== selectedAmount
+                                }" class="amount-option py-4 rounded-xl text-gray-200 hover:bg-gray-600 transition">
+                            {{ amount | number }} บาท
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-6">
+                    <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                        <h3 class="text-gray-300 font-semibold mb-2 flex items-center">✏️ ระบุจำนวนเอง</h3>
+                        <div class="flex gap-2">
+                            <input type="number" class="input-field flex-1 p-3 rounded-lg bg-gray-700 text-gray-200"
+                                   placeholder="บาท" [(ngModel)]="customAmount" (input)="updateCustomAmount()" />
+                            <button (click)="clearSelection()"
+                                    class="p-3 bg-gray-600 text-gray-200 rounded-lg hover:bg-gray-500 transition">
+                                ล้างข้อมูล
+                            </button>
+                        </div>
+                    </div>
+
+                    <div *ngIf="total > 0" class="bg-gray-800 p-6 rounded-2xl shadow-lg flex flex-col gap-2">
+                        <div class="flex justify-between text-gray-300">
+                            <span>จำนวนเงินเติม:</span>
+                            <span>{{ total | number }}</span>
+                        </div>
+                        <hr class="border-gray-700 my-2" />
+                        <div class="flex justify-between text-teal-400 font-bold">
+                            <span>รวมที่ได้รับ:</span>
+                            <span>{{ total | number }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button class="flex-1 py-3 rounded-xl bg-gray-600 text-gray-200 hover:bg-gray-500 transition">
+                            ประวัติการเติม
+                        </button>
+                        <button (click)="topUp()" [disabled]="!total || total <= 0"
+                                class="flex-1 py-3 rounded-xl text-white transition" [ngClass]="{
+                                  'bg-blue-600 hover:bg-blue-500': total > 0,
+                                  'bg-gray-500 cursor-not-allowed': !total || total <= 0
+                                }">
+                            เติมเงิน
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>

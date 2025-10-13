@@ -1,0 +1,139 @@
+<div class="flex h-screen bg-[#1a1a2e] text-gray-300 font-sans">
+  <aside class="w-64 bg-[#16213e] flex flex-col border-r border-gray-800">
+    <div class="p-6 border-b border-gray-800 text-center">
+      <h1 class="text-2xl font-bold text-white tracking-wider">GameShop</h1>
+      <span class="inline-block mt-2 px-3 py-1 bg-yellow-400 text-black text-xs font-bold rounded-full">ADMIN</span>
+    </div>
+
+    <nav class="p-4 flex-1">
+      <ul class="space-y-2">
+        <li>
+          <button (click)="setActiveMenu('dashboard')" [class.active-menu]="activeMenu === 'dashboard'" class="menu-item">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span>Dashboard</span>
+          </button>
+        </li>
+        <li>
+          <button (click)="setActiveMenu('games')" [class.active-menu]="activeMenu === 'games'" class="menu-item">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
+            <span>จัดการเกม</span>
+          </button>
+        </li>
+        <li>
+          <button (click)="setActiveMenu('types')" [class.active-menu]="activeMenu === 'types'" class="menu-item">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            <span>จัดการประเภท</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="flex-1 overflow-y-auto">
+    <header class="bg-[#16213e] px-8 py-4 flex items-center justify-end border-b border-gray-800">
+      <div class="flex items-center gap-4">
+        <span class="text-gray-400 text-sm">Admin: {{ currentUser?.email }}</span>
+        <button (click)="logout()" class="px-4 py-2 bg-red-600 bg-opacity-80 hover:bg-opacity-100 text-white rounded-lg text-sm font-medium transition-colors duration-200">
+          ออกจากระบบ
+        </button>
+      </div>
+    </header>
+
+    <div *ngIf="activeMenu === 'dashboard'" class="p-8">... Dashboard content here ...</div>
+
+    <div *ngIf="activeMenu === 'games'" class="p-8">
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+          <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
+          จัดการเกม
+        </h1>
+        <button (click)="openAddGameModal()" [disabled]="isLoadingGames" class="px-5 py-2.5 bg-[#e94560] text-white rounded-lg font-semibold hover:bg-[#d43d56] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          + เพิ่มเกมใหม่
+        </button>
+      </div>
+      <div class="mb-6 flex items-center gap-4">
+        <!-- ค้นหาเกม -->
+<input type="text" placeholder="ค้นหาเกม..." 
+  [(ngModel)]="searchTerm" (input)="filterGames()" 
+  class="flex-1 bg-[#2a2a4e] border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500">
+
+<!-- เลือกประเภท -->
+<select [(ngModel)]="selectedFilterTypeId" (change)="filterGames()"
+  class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400">
+  <option value="">ทุกประเภท</option>
+  <option *ngFor="let cat of gameTypes" [value]="cat.tid">
+    {{ cat.name_type }}
+  </option>
+</select>
+
+      </div>
+      <div class="bg-[#2a2a4e] rounded-xl border border-gray-700 overflow-hidden">
+        <div *ngIf="isLoadingGames" class="p-8 text-center text-gray-400">กำลังโหลดข้อมูล...</div>
+        <div *ngIf="gamesError" class="p-8 text-center text-red-400">⚠️ {{ gamesError }}</div>
+        <div *ngIf="!isLoadingGames && !gamesError" class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-transparent"><tr class="border-b border-gray-700"><th class="px-6 py-4 text-gray-400 font-medium">รูป</th><th class="px-6 py-4 text-gray-400 font-medium">ชื่อเกม</th><th class="px-6 py-4 text-gray-400 font-medium">ประเภท</th><th class="px-6 py-4 text-gray-400 font-medium">ราคา</th><th class="px-6 py-4 text-gray-400 font-medium">การจัดการ</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let game of filteredGames" class="border-b border-gray-800 hover:bg-[#333355]">
+              <td class="p-4"><img [src]="game.game_img" [alt]="game.game_name" class="w-16 h-10 object-cover rounded-md"></td>
+              <td class="px-6 py-4 text-white font-semibold">{{ game.game_name }}</td>
+              <td class="px-6 py-4">{{ game.name_type }}</td>
+              <td class="px-6 py-4">{{ game.price | number }} บาท</td>
+              <td class="px-6 py-4">
+                <div class="flex gap-3">
+                  <button (click)="openEditGameModal(game)" class="action-btn-edit">แก้ไข</button>
+                  <button (click)="onDeleteGame(game.gid, game.game_name)" class="action-btn-delete">ลบ</button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredGames.length === 0"><td colspan="5" class="text-center py-8 text-gray-500">ไม่พบข้อมูลเกม</td></tr>
+
+              <tr *ngIf="allGames.length === 0"><td colspan="5" class="text-center py-8 text-gray-500">ไม่พบข้อมูลเกม</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div *ngIf="activeMenu === 'types'" class="p-8">... Game Type content here ...</div>
+  </main>
+</div>
+
+<div *ngIf="showGameModal" class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50" (click)="closeGameModal()">
+    <div class="bg-gradient-to-br from-[#2a2a40] to-[#1e1e2f] rounded-lg w-11/12 max-w-2xl p-8 shadow-lg border border-gray-700 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      <h2 class="text-2xl font-bold text-white mb-6">{{ isEditing ? 'แก้ไขข้อมูลเกม' : 'เพิ่มเกมใหม่' }}</h2>
+      <form (ngSubmit)="onGameFormSubmit()" class="space-y-4">
+        <div><label class="block text-sm font-medium text-gray-300 mb-1">ชื่อเกม</label><input type="text" [(ngModel)]="currentGame.game_name" name="game_name" required class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="block text-sm font-medium text-gray-300 mb-1">ราคา (บาท)</label><input type="number" [(ngModel)]="currentGame.price" name="price" required class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></div>
+         <select [(ngModel)]="selectedTypeId" name="tid"
+  class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400">
+
+      <option *ngFor="let cat of gameTypes" [value]="cat.tid">
+        {{ cat.name_type }}
+      </option>
+    </select>
+
+        </div>
+        <div><label class="block text-sm font-medium text-gray-300 mb-1">คำอธิบาย</label><textarea [(ngModel)]="currentGame.description" name="description" rows="4" class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></textarea></div>
+         <div>
+        <label class="block text-gray-300 text-sm font-medium mb-2">เลือกรูปโปรไฟล์</label>
+        <div class="flex items-center gap-4">
+          <label
+            class="flex-1 bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-gray-400 cursor-pointer hover:border-[#5cead6] transition-all duration-300">
+            <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden">
+            <span class="text-sm">{{ GameImage ? GameImage.name : 'เลือกไฟล์...' }}</span>
+          </label>
+          <div *ngIf="GameImagePreview"
+            class="w-16 h-16 rounded-full overflow-hidden border-2 border-[#5cead6]">
+            <img [src]="GameImagePreview" alt="Preview" class="w-full h-full object-cover">
+          </div>
+        </div>
+      </div>
+        <div class="flex justify-end gap-4 pt-4">
+          <button type="button" (click)="closeGameModal()" [disabled]="isSubmittingForm" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50">ยกเลิก</button>
+          <button type="submit" [disabled]="isSubmittingForm" class="px-4 py-2 bg-[#e94560] text-white rounded-md font-semibold hover:bg-[#d43d56] disabled:opacity-50 disabled:cursor-wait">{{ isSubmittingForm ? 'กำลังบันทึก...' : (isEditing ? 'บันทึกการเปลี่ยนแปลง' : 'เพิ่มเกม') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>

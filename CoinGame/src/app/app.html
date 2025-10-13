@@ -1,2 +1,2 @@
-<app-header></app-header>
-<app-shop></app-shop>
+<app-header *ngIf="!isAdminRoute()"></app-header>
+<router-outlet></router-outlet>
