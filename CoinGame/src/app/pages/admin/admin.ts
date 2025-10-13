@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ApiGame } from '../../services/api-game';
 import { User } from '../../models/users.model';
-import { forkJoin } from 'rxjs';  
+import { forkJoin } from 'rxjs';
 
 import { Game } from '../../services/api-game';
 
@@ -12,39 +13,68 @@ import { Game } from '../../services/api-game';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './admin.html',
-  styleUrl: './admin.css'
+  styleUrls: ['./admin.css'],
 })
 export class Admin implements OnInit {
+  searchTerm: string = '';
   // --- User & Menu State ---
   currentUser: User | null = null;
   activeMenu = 'dashboard';
+  selectedTypeId: string = '';
+  selectedFilterTypeId: string = '';
+  // --- Game Management State ---
+  allGames: Game[] = [];
+  showGameModal = false;
+  isEditing = false;
+  isLoadingGames = false;
+  isSubmittingForm = false;
+  gamesError: string | null = null;
+  currentGame: Partial<Game> = {};
 
-  // Stats
-  stats = {
-    totalArticles: 5,
-    totalUsers: 3,
-    totalRevenue: 818300,
-    totalOrders: 740
-  };
+  // --- ✅ Game Type Management State ---
+  gameTypes: any[] = [];
+  showTypeModal = false;
+  isSubmittingType = false;
+  newTypeName = '';
+  isLoadingTypes = false; // <-- เพิ่ม State Loading สำหรับประเภท
+  typesError: string | null = null; // <-- เพิ่ม State Error สำหรับประเภท
+  GameImage: File | null = null;
+  GameImagePreview: string | null = null;
+  filteredGames: any[] = [];
 
-  // Top 5 Games
-  topGames: TopGame[] = [
-    { rank: 1, name: 'Fantasy RPG Quest', category: 'RPG', sales: 200, revenue: 179800 },
-    { rank: 2, name: 'Sports Champion', category: 'กีฬา', sales: 180, revenue: 143820 },
-    { rank: 3, name: 'Cyber Adventure 2077', category: 'แอ็คชั่น', sales: 150, revenue: 239850 },
-    { rank: 4, name: 'Speed Racing Pro', category: 'แข่งรถ', sales: 120, revenue: 155880 },
-    { rank: 5, name: 'Strategy Master', category: 'กลยุทธ์', sales: 90, revenue: 98910 }
-  ];
+  constructor(private apiService: ApiGame, private router: Router) {}
 
-  constructor(
-    private apiService: ApiGame,
-    private router: Router
-  ) {}
-
-  ngOnInit(): void {
-    this.currentUser = this.apiService.getCurrentUser();
+  async ngOnInit(): Promise<void> {
+    this.isLoadingGames = true;
+    this.currentUser = await this.apiService.getCurrentUser();
+    if (!this.currentUser || this.currentUser.role !== 'admin') {
+      alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
+      this.router.navigate(['/']);
+      return;
+    }
+    await this.loadGameTypes();
+    await this.loadGames();
+    this.filteredGames = this.allGames; // เริ่มต้นแสดงทั้งหมด
+    this.isLoadingGames = false;
   }
-
+  async loadGames(): Promise<void> {
+    this.apiService.getAllGames().subscribe({
+      next: (response) => {
+        // this.games = response;
+        this.filteredGames = response; // แสดงทั้งหมดตอนเริ่มต้น
+      },
+      error: (error) => {
+        console.error('Error loading games:', error);
+      },
+    });
+  }
+  filterGames() {
+    this.filteredGames = this.allGames.filter((game) => {
+      const matchesName = game.game_name.toLowerCase().includes(this.searchTerm.toLowerCase());
+      const matchesType = this.selectedFilterTypeId ? game.tid === this.selectedFilterTypeId : true;
+      return matchesName && matchesType;
+    });
+  }
   // --- Data Loading & Menu ---
   setActiveMenu(menu: string): void {
     this.activeMenu = menu;
@@ -53,6 +83,18 @@ export class Admin implements OnInit {
     }
     if (menu === 'types' && this.gameTypes.length === 0) {
       this.loadGameTypes();
+    }
+  }
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.GameImage = file;
+
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.GameImagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
   }
 
@@ -77,7 +119,7 @@ export class Admin implements OnInit {
     });
   }
 
-  loadGameTypes(): void {
+  async loadGameTypes(): Promise<void> {
     this.isLoadingTypes = true; // <-- เริ่ม Loading
     this.typesError = null;
     this.apiService.getGameTypesAdmin().subscribe({
@@ -86,10 +128,10 @@ export class Admin implements OnInit {
         this.isLoadingTypes = false; // <-- สิ้นสุด Loading
       },
       error: (err) => {
-        this.typesError = "ไม่สามารถโหลดข้อมูลประเภทเกมได้";
+        this.typesError = 'ไม่สามารถโหลดข้อมูลประเภทเกมได้';
         this.isLoadingTypes = false; // <-- สิ้นสุด Loading (พร้อม Error)
-        console.error("Failed to load game types", err);
-      }
+        console.error('Failed to load game types', err);
+      },
     });
   }
 
@@ -103,6 +145,9 @@ export class Admin implements OnInit {
   openEditGameModal(game: Game): void {
     this.isEditing = true;
     this.currentGame = { ...game };
+    this.selectedTypeId = game.tid || ''; // 💡 ตั้งค่าชนิดเกมให้ตรงกับของเดิม
+    this.GameImage = null;
+    this.GameImagePreview = game.game_img || null;
     this.showGameModal = true;
   }
 
@@ -112,18 +157,37 @@ export class Admin implements OnInit {
 
   onGameFormSubmit(): void {
     this.isSubmittingForm = true;
+    // ✅ ผูก name_type จาก selectedTypeId
+    const selectedType = this.gameTypes.find((type) => type.tid === this.selectedTypeId);
+    if (selectedType) {
+      this.currentGame.tid = selectedType.tid;
+      this.currentGame.name_type = selectedType.name_type;
+      console.log(this.currentGame.name_type);
+    }
 
+    console.log(this.currentGame);
     if (this.isEditing) {
-      // --- EDIT LOGIC ---
-      this.apiService.editGame(this.currentGame).subscribe({
+      const formData = new FormData();
+      // ส่งข้อมูลเกม
+      formData.append('gid', this.currentGame.gid || '');
+      formData.append('game_name', this.currentGame.game_name || '');
+      formData.append('price', String(this.currentGame.price || 0));
+      formData.append('description', this.currentGame.description || '');
+      formData.append('tid', this.currentGame.tid || '');
+      formData.append('name_type', this.currentGame.name_type || '');
+
+      // ส่งรูปภาพเฉพาะกรณีมีการเปลี่ยนรูปใหม่
+      if (this.GameImage) {
+        formData.append('game_img', this.GameImage);
+      }
+
+      this.apiService.editGame(formData).subscribe({
         next: (updatedGameData) => {
-          // สมมติว่า API ส่งข้อมูลที่อัปเดตแล้วกลับมา
           alert('แก้ไขข้อมูลเกมสำเร็จ!');
 
-          // อัปเดต UI ทันที (เร็วกว่าการโหลดใหม่ทั้งหมด)
           const index = this.allGames.findIndex((g) => g.gid === this.currentGame.gid);
           if (index !== -1) {
-            // ผสานข้อมูลเก่ากับข้อมูลใหม่ที่ได้รับกลับมา
+            updatedGameData.name_type = this.currentGame.name_type;
             this.allGames[index] = { ...this.allGames[index], ...updatedGameData };
           }
 
@@ -131,17 +195,30 @@ export class Admin implements OnInit {
         },
         error: (err) => {
           alert('เกิดข้อผิดพลาด: ' + (err.error?.message || 'ไม่สามารถแก้ไขข้อมูลได้'));
+          console.error('Error from editGame API:', err);
         },
         complete: () => {
           this.isSubmittingForm = false;
         },
       });
     } else {
-      // --- ADD LOGIC (เหมือนเดิม) ---
-      this.apiService.addGame(this.currentGame).subscribe({
+      const formData = new FormData();
+      console.log('selectedTypeId:', this.selectedTypeId); // 👈 ดูตรงนี้ก่อนส่ง
+
+      formData.append('game_name', this.currentGame.game_name || '');
+      formData.append('description', this.currentGame.description || '');
+      formData.append('price', String(this.currentGame.price || 0));
+      formData.append('release_date', this.currentGame.release_date || '');
+      formData.append('tid', this.currentGame.tid || '');
+      formData.append('name_type', this.currentGame.name_type || '');
+      if (this.GameImage) {
+        formData.append('game_img', this.GameImage);
+      }
+
+      this.apiService.addGame(formData).subscribe({
         next: (newGame) => {
           alert('เพิ่มเกมใหม่สำเร็จ!');
-          this.allGames.push(newGame); // อัปเดต UI ทันที
+          this.allGames.push(newGame); // อัปเดต UI
           this.closeGameModal();
         },
         error: (err) => {
