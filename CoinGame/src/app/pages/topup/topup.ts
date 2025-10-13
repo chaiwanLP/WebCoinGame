@@ -16,7 +16,7 @@ export class Topup {
   wallet$: Observable<number | null>;
   currentUser: User | null = null;
 
-  quickAmounts = [100, 200, 500, 1000, 2000, 5000];
+  quickAmounts = [100, 200, 500, 1000, 2000, 5000, 10000, 20000];
   selectedAmount: number | null = null;
   customAmount: number | null = null;
   showHistoryModal = false;
