@@ -286,10 +286,13 @@ export class ApiGame {
     if (!userId) return;
 
     this.http
-      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart`, {
-        ...this.getAuthHeaders(),
-        params: { uid: userId },
-      })
+      .get<Game[]>(
+        `${this.constants.API_ENDPOINT}/cart`,
+        {
+          ...this.getAuthHeaders(),
+          params: { uid: userId }
+        }
+      )
       .subscribe({
         next: (items) => this.cartItemsSubject.next(items || []),
         error: (err) => this.cartItemsSubject.next([]),
@@ -314,37 +317,21 @@ export class ApiGame {
       );
   }
 
-  removeFromCart(cid: string): Observable<any> {
-    return this.http.get<any>(`${this.constants.API_ENDPOINT}/delete-cart?cid=${cid}`).pipe(
-      tap((res) => {
-        const deletedGid = res.gid;
-        if (!deletedGid) {
-          console.warn('ไม่พบ GID ที่ถูกลบใน response');
-          return;
-        }
-
-        const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== deletedGid);
-        this.cartItemsSubject.next(updatedItems);
-      }),
-      catchError((error) => {
-        console.error('ลบเกมออกจากตะกร้าล้มเหลว:', error);
-        return throwError(() => error);
-      })
-    );
-  }
-  checkOwnGame(gid: string): Observable<any> {
-    const uid = this.getCurrentUser()?.id;
-    if (!uid) return throwError(() => new Error('User not logged in'));
+  removeFromCart(gid: string): Observable<any> {
+    const currentUser = this.getCurrentUser();
+    const userId = currentUser?.id || (currentUser as any)?.uid;
+    if (!userId) return throwError(() => new Error('User not logged in'));
 
     return this.http
-      .get<any>(`${this.constants.API_ENDPOINT}/checkOwnGame?uid=${uid}&gid=${gid}`)
+      .post<any>(
+        `${this.constants.API_ENDPOINT}/delete-cart`,
+        { uid: userId, gid },
+        this.getAuthHeaders()
+      )
       .pipe(
-        tap((res) => {
-          console.log('Check own game response:', res.message);
-        }),
-        catchError((error) => {
-          console.error('ตรวจสอบเกมล้มเหลว:', error);
-          return throwError(() => error);
+        tap(() => {
+          const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== gid);
+          this.cartItemsSubject.next(updatedItems);
         })
       );
   }
