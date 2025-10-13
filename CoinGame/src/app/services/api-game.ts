@@ -35,8 +35,9 @@ export class ApiGame {
   public cartItems$ = this.cartItemsSubject.asObservable();
 
   public cartTotal$ = this.cartItems$.pipe(
-    map((items) => items.reduce((total, item) => total + item.price, 0))
+    map((items) => items.reduce((total, item) => total + +item.price, 0))
   );
+
   public cartCount$ = this.cartItems$.pipe(map((items) => items.length));
 
   constructor(private constants: Constants, private http: HttpClient) {
