@@ -16,6 +16,8 @@ import { User } from '../../models/users.model';
 export class Topup {
   // --- State for Top-up Form ---
   wallet$: Observable<number | null>;
+  currentUser: User | null = null;
+
   quickAmounts = [100, 200, 500, 1000, 2000, 5000];
   selectedAmount: number | null = null;
   customAmount: number | null = null;
@@ -50,6 +52,13 @@ export class Topup {
   clearSelection(): void {
     this.selectedAmount = null;
     this.customAmount = null;
+  }
+  updateWallet(): void {
+    this.currentUser = this.apiGame.getCurrentUser();
+    this.apiGame.getWallet().subscribe((res) => {
+      console.log('💰 ยอดเงิน:', res.wallet);
+      this.currentUser!.wallet = res.wallet;
+    });
   }
 
   topUp(): void {
