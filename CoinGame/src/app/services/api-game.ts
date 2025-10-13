@@ -274,13 +274,10 @@ export class ApiGame {
     if (!userId) return;
 
     this.http
-      .get<Game[]>(
-        `${this.constants.API_ENDPOINT}/cart`,
-        {
-          ...this.getAuthHeaders(),
-          params: { uid: userId }
-        }
-      )
+      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart`, {
+        ...this.getAuthHeaders(),
+        params: { uid: userId },
+      })
       .subscribe({
         next: (items) => this.cartItemsSubject.next(items || []),
         error: (err) => this.cartItemsSubject.next([]),
@@ -320,6 +317,22 @@ export class ApiGame {
         tap(() => {
           const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== gid);
           this.cartItemsSubject.next(updatedItems);
+        })
+      );
+  }
+  checkOwnGame(gid: string): Observable<any> {
+    const uid = this.getCurrentUser()?.id;
+    if (!uid) return throwError(() => new Error('User not logged in'));
+
+    return this.http
+      .get<any>(`${this.constants.API_ENDPOINT}/checkOwnGame?uid=${uid}&gid=${gid}`)
+      .pipe(
+        tap((res) => {
+          console.log('Check own game response:', res.message);
+        }),
+        catchError((error) => {
+          console.error('ตรวจสอบเกมล้มเหลว:', error);
+          return throwError(() => error);
         })
       );
   }
