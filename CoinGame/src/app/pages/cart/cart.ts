@@ -42,11 +42,15 @@ export class Cart {
     });
   }
 
-  onRemoveItem(gid: string): void {
+  onRemoveItem(cid: string): void {
+    const confirmDelete = confirm('คุณแน่ใจว่าต้องการลบสินค้านี้หรือไม่?');
+    if (!confirmDelete) return;
+
     this.isLoading = true;
-    this.apiService.removeFromCart(gid).subscribe({
+    this.apiService.removeFromCart(cid).subscribe({
       next: () => {
         this.isLoading = false;
+        alert('ลบสินค้าเรียบร้อยแล้ว');
       },
       error: () => {
         this.isLoading = false;
