@@ -154,7 +154,6 @@ export class Profile implements OnInit {
         },
       });
   }
-  hello(): void {}
 
   logout(): void {
     if (confirm('คุณต้องการออกจากระบบหรือไม่?')) {
