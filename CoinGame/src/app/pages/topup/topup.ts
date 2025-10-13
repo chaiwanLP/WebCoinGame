@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiGame } from '../../services/api-game';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { User } from '../../models/users.model';
 
 @Component({
@@ -16,12 +16,16 @@ export class Topup {
   wallet$: Observable<number | null>;
   currentUser: User | null = null;
 
-  quickAmounts = [100, 200, 500, 1000, 2000, 5000];
+  quickAmounts = [100, 200, 500, 1000, 2000, 5000, 10000, 20000];
   selectedAmount: number | null = null;
   customAmount: number | null = null;
+  showHistoryModal = false;
+  history: any[] = [];
+  isLoadingHistory = false;
+  historyError: string | null = null;
 
   constructor(private apiGame: ApiGame) {
-    this.wallet$ = this.apiGame.wallet$;
+    this.wallet$ = this.apiGame.getWallet().pipe(map((res) => res.wallet));
   }
 
   get total(): number {
@@ -68,6 +72,39 @@ export class Topup {
       },
       error: (err) => {
         alert('เกิดข้อผิดพลาดในการเติมเงิน กรุณาลองใหม่อีกครั้ง');
+      },
+    });
+  }
+  async openHistoryModal(): Promise<void> {
+    this.showHistoryModal = true;
+    await this.loadHistory();
+    console.log(this.history);
+  }
+
+  /**
+   * ถูกเรียกเมื่อกดปิด Modal
+   */
+  closeHistoryModal(): void {
+    this.showHistoryModal = false;
+  }
+
+  /**
+   * โหลดข้อมูลประวัติ (ยังไม่เชื่อม API)
+   */
+  async loadHistory(): Promise<void> {
+    this.isLoadingHistory = true;
+    this.historyError = null;
+    this.history = [];
+
+    this.apiGame.getHistoryTopup().subscribe({
+      next: (response) => {
+        this.history = response;
+        this.isLoadingHistory = false;
+      },
+      error: (error) => {
+        console.error('Error loading history:', error);
+        this.historyError = 'ไม่สามารถโหลดข้อมูลประวัติได้';
+        this.isLoadingHistory = false;
       },
     });
   }
