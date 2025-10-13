@@ -17,6 +17,9 @@ import { Game } from '../../services/api-game';
 })
 export class Admin implements OnInit {
   searchTerm: string = '';
+  allHistory: any[] = [];
+  isLoadingHistory = false;
+  historyError: string | null = null;
   // --- User & Menu State ---
   currentUser: User | null = null;
   activeMenu = 'dashboard';
@@ -84,6 +87,9 @@ export class Admin implements OnInit {
     }
     if (menu === 'types' && this.gameTypes.length === 0) {
       this.loadGameTypes();
+    }
+    if (menu === 'history' && this.allHistory.length === 0) {
+      this.loadHistory();
     }
   }
   onFileSelected(event: any) {
@@ -269,6 +275,20 @@ export class Admin implements OnInit {
       },
       complete: () => {
         this.isSubmittingType = false;
+      },
+    });
+  }
+  loadHistory(): void {
+    this.isLoadingHistory = true;
+    this.historyError = null;
+    this.apiService.getAllHistory().subscribe({
+      next: (history) => {
+        this.allHistory = history;
+        this.isLoadingHistory = false;
+      },
+      error: (err) => {
+        this.historyError = 'ไม่สามารถโหลดข้อมูลประวัติธุรกรรมได้';
+        this.isLoadingHistory = false;
       },
     });
   }

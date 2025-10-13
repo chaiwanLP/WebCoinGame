@@ -1,12 +1,8 @@
-import { Component, signal } from '@angular/core';
-import { ShopComponent } from './components/game-shop/game-shop';
-import { HttpClientModule } from '@angular/common/http';
+import { Component } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { Header } from './components/header/header';
-
-
+import { Header } from './components/header/header'; // <-- ตรวจสอบ Path ให้ถูกต้อง
 
 @Component({
   selector: 'app-root',
@@ -15,18 +11,18 @@ import { Header } from './components/header/header';
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App {
-  currentRoute = '';
+export class App { 
+  
+  isAdminPage = false;
 
   constructor(private router: Router) {
-    this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: any) => {
-        this.currentRoute = event.url;
+      this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd)
+      )
+      .subscribe((event: NavigationEnd) => {
+        this.isAdminPage = event.urlAfterRedirects.startsWith('/admin');
       });
   }
 
-  isAdminRoute(): boolean {
-    return this.currentRoute.startsWith('/admin');
-  }
 }

@@ -428,4 +428,22 @@ export class ApiGame {
       })
     );
   }
+   /**
+   * ✅ (Admin) ดึงประวัติธุรกรรมทั้งหมด (เติมเงิน + ซื้อ)
+   */
+  getAllHistory(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/getAllHistory`, this.getAuthHeaders()).pipe(
+      // แปลงข้อมูลที่ได้รับจาก API ก่อนส่งต่อไปให้ Component
+      map(historyItems => {
+        return historyItems.map(item => {
+          // แปลง Firestore timestamp ({_seconds: ..., _nanoseconds: ...})
+          // ให้เป็น JavaScript Date object ที่ Angular รู้จัก
+          if (item.date && item.date._seconds) {
+            item.date = new Date(item.date._seconds * 1000);
+          }
+          return item;
+        });
+      })
+    );
+  }
 }
