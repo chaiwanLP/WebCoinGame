@@ -121,24 +121,24 @@ export class ApiGame {
     this.isLoggedInSubject.next(false);
     this.currentUserSubject.next(null);
   }
-  getWallet() {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser?.id) {
-      return throwError(() => new Error('User not authenticated for top-up'));
-    }
-    const uid = currentUser?.id;
-    return this.http
-      .get<{ wallet: number }>(`${this.constants.API_ENDPOINT}/getWallet?uid=${uid}`)
-      .pipe(
-        tap((response) => {
-          console.log('💰 Wallet:', response.wallet);
-        }),
-        catchError((error) => {
-          console.error('❌ Get wallet failed:', error);
-          return throwError(() => error);
-        })
-      );
-  }
+  // getWallet() {
+  //   const currentUser = this.getCurrentUser();
+  //   if (!currentUser?.id) {
+  //     return throwError(() => new Error('User not authenticated for top-up'));
+  //   }
+  //   const uid = currentUser?.id;
+  //   return this.http
+  //     .get<{ wallet: number }>(`${this.constants.API_ENDPOINT}/getWallet?uid=${uid}`)
+  //     .pipe(
+  //       tap((response) => {
+  //         console.log('💰 Wallet:', response.wallet);
+  //       }),
+  //       catchError((error) => {
+  //         console.error('❌ Get wallet failed:', error);
+  //         return throwError(() => error);
+  //       })
+  //     );
+  // }
   getHistoryTopup() {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
@@ -274,13 +274,10 @@ export class ApiGame {
     if (!userId) return;
 
     this.http
-      .get<Game[]>(
-        `${this.constants.API_ENDPOINT}/cart`,
-        {
-          ...this.getAuthHeaders(),
-          params: { uid: userId }
-        }
-      )
+      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart`, {
+        ...this.getAuthHeaders(),
+        params: { uid: userId },
+      })
       .subscribe({
         next: (items) => this.cartItemsSubject.next(items || []),
         error: (err) => this.cartItemsSubject.next([]),
