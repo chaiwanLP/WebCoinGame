@@ -77,7 +77,7 @@ export class Topup {
   }
   async openHistoryModal(): Promise<void> {
     this.showHistoryModal = true;
-    await this.loadHistory(); // เริ่มโหลดข้อมูลเมื่อเปิด Modal
+    await this.loadHistory();
     console.log(this.history);
   }
 

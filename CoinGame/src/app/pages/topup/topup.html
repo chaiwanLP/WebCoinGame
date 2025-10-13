@@ -65,6 +65,7 @@
                         class="flex-1 py-3 rounded-xl bg-gray-600 text-gray-200 hover:bg-gray-500 transition">
                         ประวัติการเติม
                     </button>
+                    
                         <button (click)="topUp()" [disabled]="!total || total <= 0"
                                 class="flex-1 py-3 rounded-xl text-white transition" [ngClass]="{
                                   'bg-blue-600 hover:bg-blue-500': total > 0,
