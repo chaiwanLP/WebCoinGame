@@ -38,7 +38,7 @@ export class Cart {
 
   onRemoveItem(gid: string, gameName: string): void {
     if (confirm(`คุณต้องการลบ "${gameName}" ออกจากตะกร้าหรือไม่?`)) {
-      this.apiService.removeFromCart(gid).subscribe({
+      this.ApiGame.removeFromCart(gid).subscribe({
         error: (err) => alert('เกิดข้อผิดพลาดในการลบสินค้า'),
       });
     }
