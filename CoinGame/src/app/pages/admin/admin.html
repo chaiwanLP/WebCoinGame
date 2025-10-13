@@ -106,13 +106,20 @@
         <div><label class="block text-sm font-medium text-gray-300 mb-1">ชื่อเกม</label><input type="text" [(ngModel)]="currentGame.game_name" name="game_name" required class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></div>
         <div class="grid grid-cols-2 gap-4">
           <div><label class="block text-sm font-medium text-gray-300 mb-1">ราคา (บาท)</label><input type="number" [(ngModel)]="currentGame.price" name="price" required class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></div>
-         <select [(ngModel)]="selectedTypeId" name="tid"
-  class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400">
+        <select
+  [(ngModel)]="selectedTypeId"
+  name="tid"
+  class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400"
+>
+  <!-- ตัว hint แค่บอก user -->
+  <option value="" disabled selected>เลือกประเภท</option>
 
-      <option *ngFor="let cat of gameTypes" [value]="cat.tid">
-        {{ cat.name_type }}
-      </option>
-    </select>
+  <!-- รายการประเภทจริง -->
+  <option *ngFor="let cat of gameTypes" [value]="cat.tid">
+    {{ cat.name_type }}
+  </option>
+</select>
+
 
         </div>
         <div><label class="block text-sm font-medium text-gray-300 mb-1">คำอธิบาย</label><textarea [(ngModel)]="currentGame.description" name="description" rows="4" class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></textarea></div>

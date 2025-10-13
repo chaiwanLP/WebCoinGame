@@ -60,14 +60,15 @@ export class Admin implements OnInit {
   async loadGames(): Promise<void> {
     this.apiService.getAllGames().subscribe({
       next: (response) => {
-        // this.games = response;
-        this.filteredGames = response; // แสดงทั้งหมดตอนเริ่มต้น
+        this.allGames = response;
+        this.filteredGames = response;
       },
       error: (error) => {
         console.error('Error loading games:', error);
       },
     });
   }
+
   filterGames() {
     this.filteredGames = this.allGames.filter((game) => {
       const matchesName = game.game_name.toLowerCase().includes(this.searchTerm.toLowerCase());
@@ -153,76 +154,73 @@ export class Admin implements OnInit {
 
   closeGameModal(): void {
     this.showGameModal = false;
+    this.clearGameForm();
+  }
+  clearGameForm(): void {
+    this.currentGame = {};
+    this.selectedTypeId = '';
+    this.GameImage = null;
+    this.GameImagePreview = null;
   }
 
   onGameFormSubmit(): void {
     this.isSubmittingForm = true;
-    // ✅ ผูก name_type จาก selectedTypeId
+
+    // เลือก type จาก selectedTypeId
     const selectedType = this.gameTypes.find((type) => type.tid === this.selectedTypeId);
     if (selectedType) {
       this.currentGame.tid = selectedType.tid;
       this.currentGame.name_type = selectedType.name_type;
-      console.log(this.currentGame.name_type);
     }
 
-    console.log(this.currentGame);
+    const formData = new FormData();
+    formData.append('game_name', this.currentGame.game_name || '');
+    formData.append('description', this.currentGame.description || '');
+    formData.append('price', String(this.currentGame.price || 0));
+    formData.append('tid', this.currentGame.tid || '');
+    formData.append('name_type', this.currentGame.name_type || '');
+    formData.append('release_date', this.currentGame.release_date || '');
+
+    if (this.GameImage) {
+      formData.append('game_img', this.GameImage);
+    }
+
     if (this.isEditing) {
-      const formData = new FormData();
-      // ส่งข้อมูลเกม
-      formData.append('gid', this.currentGame.gid || '');
-      formData.append('game_name', this.currentGame.game_name || '');
-      formData.append('price', String(this.currentGame.price || 0));
-      formData.append('description', this.currentGame.description || '');
-      formData.append('tid', this.currentGame.tid || '');
-      formData.append('name_type', this.currentGame.name_type || '');
-
-      // ส่งรูปภาพเฉพาะกรณีมีการเปลี่ยนรูปใหม่
-      if (this.GameImage) {
-        formData.append('game_img', this.GameImage);
-      }
-
+      // แก้ไขเกม
       this.apiService.editGame(formData).subscribe({
         next: (updatedGameData) => {
-          alert('แก้ไขข้อมูลเกมสำเร็จ!');
+          // กรณี backend ไม่ส่ง name_type
+          updatedGameData.name_type = this.currentGame.name_type;
 
           const index = this.allGames.findIndex((g) => g.gid === this.currentGame.gid);
           if (index !== -1) {
-            updatedGameData.name_type = this.currentGame.name_type;
             this.allGames[index] = { ...this.allGames[index], ...updatedGameData };
+            this.filterGames();
           }
 
           this.closeGameModal();
         },
         error: (err) => {
-          alert('เกิดข้อผิดพลาด: ' + (err.error?.message || 'ไม่สามารถแก้ไขข้อมูลได้'));
-          console.error('Error from editGame API:', err);
+          alert(err.message);
         },
         complete: () => {
           this.isSubmittingForm = false;
         },
       });
     } else {
-      const formData = new FormData();
-      console.log('selectedTypeId:', this.selectedTypeId); // 👈 ดูตรงนี้ก่อนส่ง
-
-      formData.append('game_name', this.currentGame.game_name || '');
-      formData.append('description', this.currentGame.description || '');
-      formData.append('price', String(this.currentGame.price || 0));
-      formData.append('release_date', this.currentGame.release_date || '');
-      formData.append('tid', this.currentGame.tid || '');
-      formData.append('name_type', this.currentGame.name_type || '');
-      if (this.GameImage) {
-        formData.append('game_img', this.GameImage);
-      }
-
+      // เพิ่มเกมใหม่
       this.apiService.addGame(formData).subscribe({
         next: (newGame) => {
-          alert('เพิ่มเกมใหม่สำเร็จ!');
-          this.allGames.push(newGame); // อัปเดต UI
+          // ถ้า backend ไม่ส่ง name_type
+          newGame.name_type = this.currentGame.name_type;
+
+          this.allGames = [...this.allGames, newGame];
+          this.filterGames();
+
           this.closeGameModal();
         },
         error: (err) => {
-          alert('เกิดข้อผิดพลาด: ' + (err.error?.message || 'ไม่สามารถเพิ่มเกมได้'));
+          alert(err.message);
         },
         complete: () => {
           this.isSubmittingForm = false;
@@ -237,6 +235,7 @@ export class Admin implements OnInit {
         next: (res) => {
           alert(res.message === 'delete success' ? 'ลบเกมสำเร็จ!' : res.message);
           this.allGames = this.allGames.filter((game) => game.gid !== gid);
+          this.filterGames(); // อัปเดต UI
         },
         error: (err) => alert('เกิดข้อผิดพลาดในการลบ'),
       });
