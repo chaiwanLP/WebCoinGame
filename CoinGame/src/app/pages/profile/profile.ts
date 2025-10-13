@@ -39,6 +39,8 @@ export class Profile implements OnInit {
   isLoading: boolean = false;
 
   constructor(private apiService: ApiGame, private router: Router) {}
+  //dfasdfasdfaddddddddddd
+  //dfasdfas
 
   ngOnInit(): void {
     this.isLoading = true; // เริ่ม loading
