@@ -207,7 +207,6 @@ export class ApiGame {
       })
     );
   }
-  //fsdafsdfasdfsd
   register(userData: {
     username: string;
     email: string;
