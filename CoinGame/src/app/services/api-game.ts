@@ -81,38 +81,23 @@ export class ApiGame {
       })
     );
   }
-  /**
-   * Register
-   */
-  register(userData: {
-    username: string;
-    email: string;
-    password: string;
-    profileImage?: File;
-  }): Observable<Users> {
-    const formData = new FormData();
-    formData.append('username', userData.username);
-    formData.append('email', userData.email);
-    formData.append('password', userData.password);
-
-    if (userData.profileImage) {
-      formData.append('profile_img', userData.profileImage);
+  getWallet() {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
     }
-
-    return this.http.post<Users>(`${this.constants.API_ENDPOINT}/register`, formData).pipe(
-      tap((response: Users) => {
-        console.log('Register response:', response);
-
-        if (response.user) {
-          // เก็บ user ใน localStorage
-          localStorage.setItem('Auth', JSON.stringify(response.user));
-
-          // อัปเดต state
-          this.isLoggedInSubject.next(true);
-          this.currentUserSubject.next(response.user);
-        }
-      })
-    );
+    const uid = currentUser?.id;
+    return this.http
+      .get<{ wallet: number }>(`${this.constants.API_ENDPOINT}/getWallet?uid=${uid}`)
+      .pipe(
+        tap((response) => {
+          console.log('💰 Wallet:', response.wallet);
+        }),
+        catchError((error) => {
+          console.error('❌ Get wallet failed:', error);
+          return throwError(() => error);
+        })
+      );
   }
   getOwnGame() {
     const currentUser = this.getCurrentUser();
@@ -264,8 +249,4 @@ export class ApiGame {
   getGameById(gid: string): Observable<any> {
     return this.http.get<any>(`${this.constants.API_ENDPOINT}/getGameById?gid=${gid}`);
   }
-
-  
-
-
 }
