@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiGame } from '../../services/api-game';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { User } from '../../models/users.model';
 
 @Component({
@@ -19,9 +19,13 @@ export class Topup {
   quickAmounts = [100, 200, 500, 1000, 2000, 5000];
   selectedAmount: number | null = null;
   customAmount: number | null = null;
+  showHistoryModal = false;
+  history: any[] = [];
+  isLoadingHistory = false;
+  historyError: string | null = null;
 
   constructor(private apiGame: ApiGame) {
-    this.wallet$ = this.apiGame.wallet$;
+     this.wallet$ = this.apiGame.getWallet().pipe(map((res) => res.wallet));
   }
 
   get total(): number {
@@ -71,4 +75,5 @@ export class Topup {
       },
     });
   }
+  
 }
