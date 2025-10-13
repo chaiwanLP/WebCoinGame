@@ -10,22 +10,18 @@ import { map } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './gamedetail.html',
-  styleUrls: ['./gamedetail.css']
+  styleUrls: ['./gamedetail.css'],
 })
-export class GameDetail implements OnInit {
+export class Gamedetail implements OnInit {
   game: Game | null = null;
   isLoading = true;
   error: string | null = null;
-  
+
   isGameInCart$!: Observable<boolean>;
-  
+
   isAddingToCart = false;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private apiService: ApiGame
-  ) {}
+  constructor(private route: ActivatedRoute, private router: Router, private apiService: ApiGame) {}
 
   ngOnInit(): void {
     this.loadGameDetail();
@@ -36,7 +32,7 @@ export class GameDetail implements OnInit {
     this.error = null;
     const gameId = this.route.snapshot.paramMap.get('id');
     if (!gameId) {
-      this.error = "ไม่พบ ID ของเกม";
+      this.error = 'ไม่พบ ID ของเกม';
       this.isLoading = false;
       return;
     }
@@ -48,16 +44,16 @@ export class GameDetail implements OnInit {
         this.isLoading = false;
       },
       error: (err) => {
-        this.error = "ไม่สามารถโหลดข้อมูลเกมได้";
+        this.error = 'ไม่สามารถโหลดข้อมูลเกมได้';
         this.isLoading = false;
-      }
+      },
     });
   }
-  
+
   initializeCartCheck(): void {
     // โค้ดส่วนนี้สมบูรณ์แบบอยู่แล้ว
     this.isGameInCart$ = this.apiService.cartItems$.pipe(
-      map(cartItems => cartItems.some(item => item.gid === this.game?.gid))
+      map((cartItems) => cartItems.some((item) => item.gid === this.game?.gid))
     );
   }
 
@@ -70,16 +66,16 @@ export class GameDetail implements OnInit {
     this.apiService.addToCart(this.game.gid).subscribe({
       // เมื่อ API ทำงานเสร็จ (ไม่ว่าจะสำเร็จหรือไม่) ให้ปิดสถานะ Loading
       next: () => {
-        this.isAddingToCart = false; 
+        this.isAddingToCart = false;
         // ไม่ต้องทำอะไรต่อ เพราะ isGameInCart$ จะอัปเดตปุ่มให้เอง
       },
       error: (err) => {
-        alert("เกิดข้อผิดพลาดในการเพิ่มสินค้า");
+        alert('เกิดข้อผิดพลาดในการเพิ่มสินค้า');
         this.isAddingToCart = false;
-      }
+      },
     });
   }
-  
+
   goBack(): void {
     this.router.navigate(['/']);
   }

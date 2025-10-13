@@ -81,12 +81,6 @@ export class ApiGame {
       })
     );
   }
-
-  logout(): void {
-    localStorage.removeItem('Auth');
-    this.isLoggedInSubject.next(false);
-    this.currentUserSubject.next(null);
-  }
   getWallet() {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
@@ -105,6 +99,46 @@ export class ApiGame {
         })
       );
   }
+  getOwnGame() {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser?.id) {
+      return throwError(() => new Error('User not authenticated for top-up'));
+    }
+    const uid = currentUser?.id;
+    return this.http.get<any[]>(`${this.constants.API_ENDPOINT}/profile?uid=${uid}`).pipe(
+      tap((response) => {
+        console.log('game', response);
+      }),
+      catchError((error) => {
+        console.error('❌ Get wallet failed:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  logout(): void {
+    localStorage.removeItem('Auth');
+    this.isLoggedInSubject.next(false);
+    this.currentUserSubject.next(null);
+  }
+  // getWallet() {
+  //   const currentUser = this.getCurrentUser();
+  //   if (!currentUser?.id) {
+  //     return throwError(() => new Error('User not authenticated for top-up'));
+  //   }
+  //   const uid = currentUser?.id;
+  //   return this.http
+  //     .get<{ wallet: number }>(`${this.constants.API_ENDPOINT}/getWallet?uid=${uid}`)
+  //     .pipe(
+  //       tap((response) => {
+  //         console.log('💰 Wallet:', response.wallet);
+  //       }),
+  //       catchError((error) => {
+  //         console.error('❌ Get wallet failed:', error);
+  //         return throwError(() => error);
+  //       })
+  //     );
+  // }
   getHistoryTopup() {
     const currentUser = this.getCurrentUser();
     if (!currentUser?.id) {
@@ -240,13 +274,10 @@ export class ApiGame {
     if (!userId) return;
 
     this.http
-      .get<Game[]>(
-        `${this.constants.API_ENDPOINT}/cart`,
-        {
-          ...this.getAuthHeaders(),
-          params: { uid: userId }
-        }
-      )
+      .get<Game[]>(`${this.constants.API_ENDPOINT}/cart`, {
+        ...this.getAuthHeaders(),
+        params: { uid: userId },
+      })
       .subscribe({
         next: (items) => this.cartItemsSubject.next(items || []),
         error: (err) => this.cartItemsSubject.next([]),
@@ -277,13 +308,10 @@ export class ApiGame {
     if (!userId) return throwError(() => new Error('User not logged in'));
 
     return this.http
-      .post<any>(
-        `${this.constants.API_ENDPOINT}/delete-cart`,
-        {
-          ...this.getAuthHeaders(),
-          params: { uid: userId, gid }
-        }
-      )
+      .post<any>(`${this.constants.API_ENDPOINT}/delete-cart`, {
+        ...this.getAuthHeaders(),
+        params: { uid: userId, gid },
+      })
       .pipe(
         tap(() => {
           const updatedItems = this.cartItemsSubject.value.filter((item) => item.gid !== gid);
