@@ -78,6 +78,7 @@ export class Topup {
     });
   }
 
+
   /**
    * ถูกเรียกเมื่อกดปุ่ม "ประวัติการเติม"
    */
@@ -108,7 +109,7 @@ export class Topup {
       // **กรณีสำเร็จ (Success)**
       this.history = [
         { transaction_date: '2025-10-12T10:00:00Z', amount: 500, status: 'Completed' },
-        { transaction_date: '2025-09-28T15:30:00Z', amount: 200, status: 'Completed' },
+        { transaction_date: '2025-09-28T15:30:00Z', amount: 200, status: 'Completed' }
       ];
       this.isLoadingHistory = false;
 
