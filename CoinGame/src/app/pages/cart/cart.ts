@@ -38,13 +38,20 @@ export class Cart {
     this.wallet$ = this.apiService.wallet$;
   }
 
-  /**
-   * ถูกเรียกเมื่อผู้ใช้กดปุ่ม "ลบ"
-   */
-  onRemoveItem(gid: string): void {
-    this.apiService.removeFromCart(gid).subscribe({
-      // ไม่ต้องทำอะไรใน next เพราะ Service จัดการอัปเดต UI ให้แล้ว
-      error: (err) => alert('เกิดข้อผิดพลาดในการลบสินค้า'),
+  onRemoveItem(cid: string): void {
+    const confirmDelete = confirm('คุณแน่ใจว่าต้องการลบสินค้านี้หรือไม่?');
+    if (!confirmDelete) return;
+
+    this.isLoading = true;
+    this.apiService.removeFromCart(cid).subscribe({
+      next: () => {
+        this.isLoading = false;
+        alert('ลบสินค้าเรียบร้อยแล้ว');
+      },
+      error: () => {
+        this.isLoading = false;
+        alert('เกิดข้อผิดพลาดในการลบสินค้า');
+      },
     });
   }
 
@@ -68,6 +75,7 @@ export class Cart {
       });
     }
   }
+
   openHistoryModal(): void {
     this.showHistoryModal = true;
     this.loadHistory();
