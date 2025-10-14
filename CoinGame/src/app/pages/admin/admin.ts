@@ -195,10 +195,20 @@ export class Admin implements OnInit {
     }
 
     if (this.isEditing) {
-      // แก้ไขเกม
+      const formData = new FormData();
+      formData.append('gid', this.currentGame.gid || ''); // ✅ ต้องมี
+      formData.append('game_name', this.currentGame.game_name || '');
+      formData.append('price', String(this.currentGame.price || 0));
+      formData.append('description', this.currentGame.description || '');
+      formData.append('tid', this.currentGame.tid || '');
+      formData.append('name_type', this.currentGame.name_type || '');
+
+      if (this.GameImage) {
+        formData.append('game_img', this.GameImage);
+      }
+
       this.apiService.editGame(formData).subscribe({
         next: (updatedGameData) => {
-          // กรณี backend ไม่ส่ง name_type
           updatedGameData.name_type = this.currentGame.name_type;
 
           const index = this.allGames.findIndex((g) => g.gid === this.currentGame.gid);
