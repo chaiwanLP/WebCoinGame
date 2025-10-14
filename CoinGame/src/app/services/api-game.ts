@@ -5,7 +5,6 @@ import { tap, catchError, switchMap, map } from 'rxjs/operators';
 import { Constants } from '../config/constants';
 import { User, Users } from '../models/users.model';
 
-// ✅ 1. ย้าย Interface ของ Game มาไว้ที่นี่เพื่อความเป็นระเบียบ
 export interface Game {
   cid: string;
   gid: string;
@@ -46,9 +45,8 @@ export class ApiGame {
     this.isLoggedIn$.subscribe((isLoggedIn) => {
       if (isLoggedIn) {
         this.refreshWallet().subscribe();
-        this.getCart(); // <-- เมื่อ Login ให้ดึงข้อมูลตะกร้าทันที
+        this.getCart(); 
       } else {
-        // เมื่อ Logout ให้ล้างข้อมูลทั้งหมดที่เกี่ยวกับผู้ใช้
         this.walletSubject.next(null);
         this.cartItemsSubject.next([]);
       }
