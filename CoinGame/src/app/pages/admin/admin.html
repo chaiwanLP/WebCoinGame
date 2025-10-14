@@ -47,7 +47,7 @@
           </button>
         </li>
         <li>
-          <button (click)="setActiveMenu('history')" [class.active-menu]="activeMenu === 'orders'" class="menu-item">
+          <button (click)="setActiveMenu('history')" [class.active-menu]="activeMenu === 'history'" class="menu-item">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -89,11 +89,9 @@
         </button>
       </div>
       <div class="mb-6 flex items-center gap-4">
-        <!-- ค้นหาเกม -->
         <input type="text" placeholder="ค้นหาเกม..." [(ngModel)]="searchTerm" (input)="filterGames()"
           class="flex-1 bg-[#2a2a4e] border border-gray-700 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500">
 
-        <!-- เลือกประเภท -->
         <select [(ngModel)]="selectedFilterTypeId" (change)="filterGames()"
           class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400">
           <option value="">ทุกประเภท</option>
@@ -101,11 +99,12 @@
             {{ cat.name_type }}
           </option>
         </select>
-
       </div>
+
       <div class="bg-[#2a2a4e] rounded-xl border border-gray-700 overflow-hidden">
         <div *ngIf="isLoadingGames" class="p-8 text-center text-gray-400">กำลังโหลดข้อมูล...</div>
         <div *ngIf="gamesError" class="p-8 text-center text-red-400">⚠️ {{ gamesError }}</div>
+
         <div *ngIf="!isLoadingGames && !gamesError" class="overflow-x-auto">
           <table class="w-full text-sm text-left">
             <thead class="bg-transparent">
@@ -126,17 +125,17 @@
                 <td class="px-6 py-4">{{ game.price | number }} บาท</td>
                 <td class="px-6 py-4">
                   <div class="flex gap-3">
-                    <button (click)="openEditGameModal(game)" class="action-btn-edit">แก้ไข</button>
-                    <button (click)="onDeleteGame(game.gid, game.game_name)" class="action-btn-delete">ลบ</button>
+                    <button (click)="openEditGameModal(game)"
+                      class="px-3 py-1 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 transition-colors">แก้ไข</button>
+                    <button (click)="onDeleteGame(game.gid, game.game_name)"
+                      class="px-3 py-1 bg-red-600 text-white rounded-md text-xs font-semibold hover:bg-red-700 transition-colors">ลบ</button>
                   </div>
                 </td>
               </tr>
               <tr *ngIf="filteredGames.length === 0">
-                <td colspan="5" class="text-center py-8 text-gray-500">ไม่พบข้อมูลเกม</td>
-              </tr>
-
-              <tr *ngIf="allGames.length === 0">
-                <td colspan="5" class="text-center py-8 text-gray-500">ไม่พบข้อมูลเกม</td>
+                <td colspan="5" class="text-center py-8 text-gray-500">
+                  {{ searchTerm || selectedFilterTypeId ? 'ไม่พบเกมที่ตรงกับการค้นหา' : 'ยังไม่มีข้อมูลเกม' }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -145,56 +144,58 @@
     </div>
 
     <div *ngIf="activeMenu === 'types'" class="p-8">... Game Type content here ...</div>
-    <div *ngIf="activeMenu === 'history'">
-                <div class="flex items-center justify-between mb-8">
-                    <h1 class="text-3xl font-bold text-white">ประวัติธุรกรรมทั้งหมด</h1>
-                </div>
+    <div *ngIf="activeMenu === 'history'" class="p-8"> <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-white">ประวัติธุรกรรมทั้งหมด</h1>
+        <input type="text" placeholder="ค้นหาผู้ใช้..."
+          class="px-4 py-2 bg-[#1e1e3a] border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          [(ngModel)]="userSearchTerm" (ngModelChange)="filterHistory()">
+      </div>
 
-                <div class="bg-[#2a2a4e] rounded-xl border border-gray-700 overflow-hidden">
-                    <div *ngIf="isLoadingHistory" class="p-8 text-center text-gray-400">กำลังโหลดข้อมูล...</div>
-                    <div *ngIf="historyError" class="p-8 text-center text-red-400">⚠️ {{ historyError }}</div>
+      <div class="bg-[#2a2a4e] rounded-xl border border-gray-700 overflow-hidden">
+        <div *ngIf="isLoadingHistory" class="p-8 text-center text-gray-400">กำลังโหลดข้อมูล...</div>
+        <div *ngIf="historyError" class="p-8 text-center text-red-400">⚠️ {{ historyError }}</div>
 
-                    <div *ngIf="!isLoadingHistory && !historyError" class="overflow-x-auto">
-                        <table class="w-full text-sm text-left">
-                            <thead>
-                                <tr class="border-b border-gray-700 bg-black/20">
-                                    <th class="px-6 py-4">ประเภท</th>
-                                    <th class="px-6 py-4">ผู้ใช้</th>
-                                    <th class="px-6 py-4">วันที่</th>
-                                    <th class="px-6 py-4">รายละเอียด</th>
-                                    <th class="px-6 py-4 text-right">จำนวนเงิน (บาท)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr *ngFor="let item of allHistory" class="border-b border-gray-800 hover:bg-[#333355]">
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-1 text-xs font-bold rounded-full uppercase"
-                                            [ngClass]="{
-                                                'bg-green-500/20 text-green-300': item.type === 'topup',
-                                                'bg-red-500/20 text-red-400': item.type === 'buy'
-                                            }">
-                                            {{ item.type }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-white font-semibold">{{ item.username }}</td>
-                                    <td class="px-6 py-4">{{ item.date | date:'dd/MM/yyyy HH:mm' }}</td>
-                                    <td class="px-6 py-4 text-gray-400 max-w-xs truncate">{{ item.description }}</td>
-                                    <td class="px-6 py-4 text-right font-mono"
-                                        [ngClass]="{
-                                            'text-green-400': item.type === 'topup',
-                                            'text-red-400': item.type === 'buy'
-                                        }">
-                                        {{ (item.type === 'buy' ? '-' : '+') }}{{ item.amount | number:'1.2-2' }}
-                                    </td>
-                                </tr>
-                                <tr *ngIf="allHistory.length === 0">
-                                    <td colspan="5" class="text-center py-8 text-gray-500">ไม่พบข้อมูลธุรกรรม</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        <div *ngIf="!isLoadingHistory && !historyError" class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-gray-700 bg-black/20">
+                <th class="px-6 py-4">ประเภท</th>
+                <th class="px-6 py-4">ผู้ใช้</th>
+                <th class="px-6 py-4">วันที่</th>
+                <th class="px-6 py-4">รายละเอียด</th>
+                <th class="px-6 py-4 text-right">จำนวนเงิน (บาท)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of filteredHistory" class="border-b border-gray-800 hover:bg-[#333355]">
+                <td class="px-6 py-4">
+                  <span class="px-2 py-1 text-xs font-bold rounded-full uppercase" [ngClass]="{
+                                'bg-green-500/20 text-green-300': item.type === 'topup',
+                                'bg-red-500/20 text-red-400': item.type === 'buy'
+                              }">
+                    {{ item.type }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-white font-semibold">{{ item.username }}</td>
+                <td class="px-6 py-4">{{ item.date | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="px-6 py-4 text-gray-400 max-w-xs truncate">{{ item.description }}</td>
+                <td class="px-6 py-4 text-right font-mono" [ngClass]="{
+                                'text-green-400': item.type === 'topup',
+                                'text-red-400': item.type === 'buy'
+                              }">
+                  {{ (item.type === 'buy' ? '-' : '+') }}{{ item.amount | number:'1.2-2' }}
+                </td>
+              </tr>
+              <tr *ngIf="filteredHistory.length === 0">
+                <td colspan="5" class="text-center py-8 text-gray-500">
+                  {{ userSearchTerm ? 'ไม่พบผู้ใช้ที่ค้นหา' : 'ไม่พบข้อมูลธุรกรรม' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -205,42 +206,51 @@
     (click)="$event.stopPropagation()">
     <h2 class="text-2xl font-bold text-white mb-6">{{ isEditing ? 'แก้ไขข้อมูลเกม' : 'เพิ่มเกมใหม่' }}</h2>
     <form (ngSubmit)="onGameFormSubmit()" class="space-y-4">
-      <div><label class="block text-sm font-medium text-gray-300 mb-1">ชื่อเกม</label><input type="text"
-          [(ngModel)]="currentGame.game_name" name="game_name" required
-          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></div>
-      <div class="grid grid-cols-2 gap-4">
-        <div><label class="block text-sm font-medium text-gray-300 mb-1">ราคา (บาท)</label><input type="number"
-            [(ngModel)]="currentGame.price" name="price" required
-            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></div>
-        <select [(ngModel)]="selectedTypeId" name="tid"
-          class="px-3 py-2 rounded-md bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-400">
-          <!-- ตัว hint แค่บอก user -->
-          <option value="" disabled selected>เลือกประเภท</option>
-
-          <!-- รายการประเภทจริง -->
-          <option *ngFor="let cat of gameTypes" [value]="cat.tid">
-            {{ cat.name_type }}
-          </option>
-        </select>
-
-
-      </div>
-      <div><label class="block text-sm font-medium text-gray-300 mb-1">คำอธิบาย</label><textarea
-          [(ngModel)]="currentGame.description" name="description" rows="4"
-          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white"></textarea></div>
       <div>
-        <label class="block text-gray-300 text-sm font-medium mb-2">เลือกรูปโปรไฟล์</label>
+        <label class="block text-sm font-medium text-gray-300 mb-1">ชื่อเกม</label>
+        <input type="text" [(ngModel)]="currentGame.game_name" name="game_name" required
+          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">ราคา (บาท)</label>
+          <input type="number" [(ngModel)]="currentGame.price" name="price" required
+            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">ประเภทเกม</label>
+          <select [(ngModel)]="selectedTypeId" name="tid" required
+            class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <option value="" disabled selected>เลือกประเภท</option>
+            <option *ngFor="let cat of gameTypes" [value]="cat.tid">
+              {{ cat.name_type }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">คำอธิบาย</label>
+        <textarea [(ngModel)]="currentGame.description" name="description" rows="4"
+          class="w-full bg-[#1e1e2f] border border-gray-600 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-gray-300 text-sm font-medium mb-2">เลือกรูปเกม</label>
         <div class="flex items-center gap-4">
           <label
             class="flex-1 bg-[#1e1e2f] border border-gray-600 rounded-lg px-4 py-3.5 text-gray-400 cursor-pointer hover:border-[#5cead6] transition-all duration-300">
             <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden">
             <span class="text-sm">{{ GameImage ? GameImage.name : 'เลือกไฟล์...' }}</span>
           </label>
-          <div *ngIf="GameImagePreview" class="w-16 h-16 rounded-full overflow-hidden border-2 border-[#5cead6]">
+          <div *ngIf="GameImagePreview"
+            class="w-24 h-14 rounded-lg overflow-hidden border-2 border-[#5cead6] bg-[#1e1e2f]">
             <img [src]="GameImagePreview" alt="Preview" class="w-full h-full object-cover">
           </div>
         </div>
       </div>
+
       <div class="flex justify-end gap-4 pt-4">
         <button type="button" (click)="closeGameModal()" [disabled]="isSubmittingForm"
           class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50">ยกเลิก</button>
@@ -251,34 +261,3 @@
     </form>
   </div>
 </div>
-
-
-
-
-
-
-
-
-<div class="flex h-screen bg-[#1a1a2e] text-gray-300 font-sans">
-    
-    <aside class="w-64 bg-[#16213e] flex flex-col border-r border-gray-800">
-        <nav class="p-4 flex-1">
-            <ul class="space-y-2">
-                <li>
-                    <button (click)="setActiveMenu('users')" [class.active-menu]="activeMenu === 'users'" class="menu-item">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21v-1a6 6 0 00-5.173-5.973"></path></svg>
-                        <span>จัดการผู้ใช้</span>
-                    </button>
-                </li>
-
-                <li>
-                    <button (click)="setActiveMenu('history')" [class.active-menu]="activeMenu === 'history'" class="menu-item">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span>ประวัติธุรกรรม</span>
-                    </button>
-                </li>
-            </ul>
-        </nav>
-    </aside>
-
-    

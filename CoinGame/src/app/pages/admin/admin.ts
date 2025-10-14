@@ -20,6 +20,9 @@ export class Admin implements OnInit {
   allHistory: any[] = [];
   isLoadingHistory = false;
   historyError: string | null = null;
+  filteredHistory: any[] = [];
+  userSearchTerm: string = '';
+
   // --- User & Menu State ---
   currentUser: User | null = null;
   activeMenu = 'dashboard';
@@ -34,7 +37,7 @@ export class Admin implements OnInit {
   gamesError: string | null = null;
   currentGame: Partial<Game> = {};
 
-  // --- ✅ Game Type Management State ---
+  // ---  Game Type Management State ---
   gameTypes: any[] = [];
   showTypeModal = false;
   isSubmittingType = false;
@@ -284,6 +287,7 @@ export class Admin implements OnInit {
     this.apiService.getAllHistory().subscribe({
       next: (history) => {
         this.allHistory = history;
+        this.filteredHistory = history;
         this.isLoadingHistory = false;
       },
       error: (err) => {
@@ -291,6 +295,17 @@ export class Admin implements OnInit {
         this.isLoadingHistory = false;
       },
     });
+  }
+  filterHistory(): void {
+    if (!this.userSearchTerm) {
+      this.filteredHistory = this.allHistory;
+    } else {
+      this.filteredHistory = this.allHistory.filter(
+        (item) =>
+          // ตรวจสอบว่า item.username มีค่าก่อนเรียก toLowerCase()
+          item.username && item.username.toLowerCase().includes(this.userSearchTerm.toLowerCase())
+      );
+    }
   }
 
   logout(): void {
