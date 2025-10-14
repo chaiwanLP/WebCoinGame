@@ -155,7 +155,7 @@ export class Admin implements OnInit {
   openEditGameModal(game: Game): void {
     this.isEditing = true;
     this.currentGame = { ...game };
-    this.selectedTypeId = game.tid || ''; // 💡 ตั้งค่าชนิดเกมให้ตรงกับของเดิม
+    this.selectedTypeId = game.tid || '';  
     this.GameImage = null;
     this.GameImagePreview = game.game_img || null;
     this.showGameModal = true;
